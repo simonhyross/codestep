@@ -292,6 +292,7 @@ begin
 end $$;
 
 -- Lock down function execution: nothing is callable by default; grant explicitly.
+revoke all on function public.handle_new_user() from public, anon, authenticated;   -- trigger function: never callable as an API endpoint
 revoke all on function public.get_my_progress(), public.record_step(text, int), public.import_guest_progress(text[]),
   public.get_leaderboard(text, int), public.username_available(text), public.delete_my_account(), public.export_my_data(),
   public.claim_due_emails(), public.set_email_pref(uuid, text, boolean) from public, anon, authenticated;

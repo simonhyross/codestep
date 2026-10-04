@@ -8,32 +8,39 @@ exactly as before (guest mode, progress saved in the browser). To turn accounts 
 > security rules in `supabase/schema.sql`, not from hiding that key. Never put the `service_role` key in the repo.
 
 ## 1. Create the project and the database
-1. Create a Supabase project (pick a region close to your users) and note the **Project URL** and **anon public key**
-   (Project Settings → API).
-2. Open **SQL Editor** and run, in this order:
-   1. `supabase/schema.sql`
-   2. `supabase/seed_steps.sql` (regenerate with `node scripts/gen-seed.mjs` whenever you change `lessons.js`)
-   3. `supabase/storage.sql`
-3. Put the URL and anon key into `config.js`, commit and push. The site picks them up on the next deploy.
+1. Create a Supabase project (pick a region close to your users).
+2. Install the CLI and sign in: `brew install supabase/tap/supabase`, then `supabase login` and
+   `supabase link --project-ref <ref>` (the ref is the 20-letter id in the project URL).
+3. Apply the database (no database password needed; it goes through the Management API):
+   ```bash
+   node scripts/gen-seed.mjs        # regenerate whenever you change lessons.js
+   supabase db query --linked -f supabase/schema.sql
+   supabase db query --linked -f supabase/seed_steps.sql
+   supabase db query --linked -f supabase/storage.sql
+   supabase db query --linked -f supabase/tests/live-smoke.sql   # expect an error that says SMOKE_OK (it rolls itself back)
+   supabase db advisors --linked --type security                  # the remaining warnings are the intended API functions
+   ```
+4. Put the **Project URL** and the **publishable (anon) key** (`supabase projects api-keys`) into `config.js`, commit and push.
 
-## 2. Authentication settings (Dashboard → Authentication)
+## 2. Authentication settings
+The settings below are in `supabase/config.toml`. Review and apply them with **`supabase config push`**
+(it shows a diff and asks for confirmation). You can also set them by hand under Dashboard → Authentication.
+
 | Setting | Value | Why |
 | --- | --- | --- |
-| Providers → Email | enabled, **Confirm email = on** | stops sign-ups with other people's addresses |
-| Password policy | minimum length **10**, require lower + upper + digits | matches the client-side checks |
-| Leaked password protection | on (needs Pro plan) | rejects passwords found in breach lists |
+| Email confirmations | **on** | stops sign-ups with other people's addresses |
+| Password policy | minimum length **10**, lower + upper + digits | matches the client-side checks |
 | Secure password change | on | requires a recent login before changing the password |
-| Multi-factor → TOTP | enabled | powers the 2FA switch in Settings |
-| URL Configuration → Site URL | your Pages URL, e.g. `https://<user>.github.io/pythonic/` | where links in emails point |
-| URL Configuration → Redirect URLs | the same URL, plus `http://localhost:5180/` for local work | blocks open-redirect abuse |
-| Rate limits | keep the defaults or lower them | Supabase limits sign-ins, sign-ups and emails per IP |
-| Attack protection → CAPTCHA | optional (Cloudflare Turnstile / hCaptcha) | stops bot sign-ups (needs a small client change) |
-| Emails → SMTP | custom SMTP (e.g. Resend) | the built-in mailer is limited to a few emails per hour |
+| Multi-factor → TOTP | enroll + verify enabled | powers the 2FA switch in Settings |
+| Site URL / Redirect URLs | your Pages URL (plus `http://localhost:5180/`) | blocks open-redirect abuse |
+| Leaked password protection | on (**Pro plan only**, dashboard) | rejects passwords found in breach lists |
+| Attack protection → CAPTCHA | optional (dashboard) | stops bot sign-ups (needs a small client change) |
+| Emails → SMTP | custom SMTP, e.g. Resend (dashboard) | the built-in mailer allows only a few emails per hour |
 
 ### Google sign-in
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → **Create OAuth client ID** (Web application).
 2. Authorised redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`
-3. Copy the client ID and secret into Supabase → Authentication → Providers → Google, and enable it.
+3. `export GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...`, set `enabled = true` under `[auth.external.google]` in `supabase/config.toml`, then run `supabase config push`.
 4. Configure the OAuth consent screen (app name, support email). Publish it so users outside your test list can sign in.
 
 ## 3. Reminder and weekly-summary emails (optional)
