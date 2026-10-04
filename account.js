@@ -12,7 +12,6 @@ Account.onThemeChanged = th => { if (Account.phase === "ready") save({ theme: th
 
 const go = hash => { if (location.hash !== hash) location.hash = hash; else App.refresh(); };
 const errText = e => t((e && e.key) || "err_generic");
-const wait = ms => new Promise(r => setTimeout(r, ms));
 const hasRoute = name => (location.hash.split("/")[1] || "learn") === name;
 
 /* ------------------------------------------------------------ avatars */
@@ -270,7 +269,7 @@ function promptUsername() {
 }
 
 /* ------------------------------------------------------------ settings */
-const row = (title, note, control, id = "") => `<div class="srow" ${id ? `id="${id}"` : ""}><div class="stext"><b>${title}</b>${note ? `<span>${note}</span>` : ""}</div><div class="sctl">${control}</div></div>`;
+const row = (title, note, control) => `<div class="srow"><div class="stext"><b>${title}</b>${note ? `<span>${note}</span>` : ""}</div><div class="sctl">${control}</div></div>`;
 const toggle = (id, on) => `<button class="switch" role="switch" id="${id}" aria-checked="${!!on}"></button>`;
 const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(label)}</option>`;
 function timezones() { try { return Intl.supportedValuesOf("timeZone"); } catch { return ["UTC", "Europe/Stockholm", "Europe/London", "America/New_York", "America/Los_Angeles", "Asia/Tokyo"]; } }

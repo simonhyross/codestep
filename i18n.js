@@ -3,7 +3,7 @@
 (() => {
 const en = {
   err_username: "That username isn't available.", err_cooldown: "You can change your username once every 7 days.",
-  nav_learn: "Learn", nav_playground: "Playground", nav_leaderboard: "Leaderboard", nav_settings: "Settings", nav_profile: "Profile",
+  nav_learn: "Learn", nav_playground: "Playground", nav_leaderboard: "Leaderboard", nav_profile: "Profile",
   sign_in: "Sign in", sign_out: "Sign out", create_account: "Create account", guest: "Guest",
   path_title: "Your learning path", streak: "Day streak", total_xp: "Total XP", level: "Level", xp: "XP",
   start: "START", start_lesson: "Start lesson", practice_again: "Practice again", unlock_msg: "Finish “{title}” to unlock this lesson.",
@@ -51,7 +51,7 @@ const en = {
   err_invalid: "Wrong email or password.", err_unconfirmed: "Please confirm your email first. Check your inbox.", err_rate: "Too many attempts. Please wait a minute and try again.",
   err_weak: "That password isn't strong enough.", err_generic: "Something went wrong. Please try again.", err_network: "Can't reach the server. Check your connection.",
   err_email: "Enter a valid email address.", err_reauth: "For security, please sign in again and retry.",
-  welcome_toast: "Signed in. Welcome, {name}!", signed_out: "Signed out", not_configured: "Accounts aren't enabled on this site yet.",
+  signed_out: "Signed out", not_configured: "Accounts aren't enabled on this site yet.",
   choose_username: "Choose your username", choose_username_text: "This is how you'll appear on the leaderboard. You can change it later (once every 7 days).",
   imported: "Your progress from this device was added to your account.", demo_banner: "Demo mode: accounts are simulated in this browser only.",
 
@@ -76,7 +76,7 @@ const en = {
   unlock_all: "Unlock all lessons", unlock_all_note: "Jump to any lesson without finishing the previous ones.",
   reset_progress: "Reset progress", reset_note: "Erase XP, streak and completed lessons on this device.", reset_confirm: "Reset all progress?", cant_undo: "This can't be undone.", progress_reset: "Progress reset",
   guest_banner_title: "You're learning as a guest", guest_banner_text: "Create a free account to save your progress, join the leaderboard and get practice reminders.",
-  email_label: "Email", password_updated: "Password updated.", member_since: "Member since {d}",
+  member_since: "Member since {d}",
 
   /* leaderboard */
   lb_title: "Leaderboard", lb_week: "This week", lb_all: "All time", lb_resets: "Resets in {t}", lb_empty: "No one is on the board yet. Finish a lesson to take first place!",
@@ -86,7 +86,7 @@ const en = {
 
 const es = {
   err_username: "Ese nombre de usuario no está disponible.", err_cooldown: "Puedes cambiar tu nombre de usuario una vez cada 7 días.",
-  nav_learn: "Aprender", nav_playground: "Laboratorio", nav_leaderboard: "Clasificación", nav_settings: "Ajustes", nav_profile: "Perfil",
+  nav_learn: "Aprender", nav_playground: "Laboratorio", nav_leaderboard: "Clasificación", nav_profile: "Perfil",
   sign_in: "Iniciar sesión", sign_out: "Cerrar sesión", create_account: "Crear cuenta", guest: "Invitado",
   path_title: "Tu ruta de aprendizaje", streak: "Racha de días", total_xp: "XP total", level: "Nivel", xp: "XP",
   start: "EMPEZAR", start_lesson: "Empezar lección", practice_again: "Practicar de nuevo", unlock_msg: "Termina «{title}» para desbloquear esta lección.",
@@ -133,7 +133,7 @@ const es = {
   err_invalid: "Correo o contraseña incorrectos.", err_unconfirmed: "Confirma primero tu correo. Revisa tu bandeja.", err_rate: "Demasiados intentos. Espera un minuto e inténtalo de nuevo.",
   err_weak: "Esa contraseña no es lo bastante segura.", err_generic: "Algo salió mal. Inténtalo de nuevo.", err_network: "No se puede conectar con el servidor. Revisa tu conexión.",
   err_email: "Introduce un correo válido.", err_reauth: "Por seguridad, inicia sesión de nuevo e inténtalo otra vez.",
-  welcome_toast: "Sesión iniciada. ¡Bienvenido, {name}!", signed_out: "Sesión cerrada", not_configured: "Las cuentas aún no están activadas en este sitio.",
+  signed_out: "Sesión cerrada", not_configured: "Las cuentas aún no están activadas en este sitio.",
   choose_username: "Elige tu nombre de usuario", choose_username_text: "Así aparecerás en la clasificación. Podrás cambiarlo más tarde (una vez cada 7 días).",
   imported: "El progreso de este dispositivo se añadió a tu cuenta.", demo_banner: "Modo demo: las cuentas se simulan solo en este navegador.",
 
@@ -157,7 +157,7 @@ const es = {
   unlock_all: "Desbloquear todas las lecciones", unlock_all_note: "Ve a cualquier lección sin terminar las anteriores.",
   reset_progress: "Restablecer progreso", reset_note: "Borra XP, racha y lecciones completadas en este dispositivo.", reset_confirm: "¿Restablecer todo el progreso?", cant_undo: "No se puede deshacer.", progress_reset: "Progreso restablecido",
   guest_banner_title: "Estás aprendiendo como invitado", guest_banner_text: "Crea una cuenta gratis para guardar tu progreso, entrar en la clasificación y recibir recordatorios.",
-  email_label: "Correo electrónico", password_updated: "Contraseña actualizada.", member_since: "Miembro desde {d}",
+  member_since: "Miembro desde {d}",
 
   lb_title: "Clasificación", lb_week: "Esta semana", lb_all: "Histórico", lb_resets: "Se reinicia en {t}", lb_empty: "Todavía no hay nadie. ¡Termina una lección y llega al primer puesto!",
   lb_you: "Tú", lb_signin_title: "Inicia sesión para ver la clasificación", lb_signin_text: "Crea una cuenta gratis para competir con otros estudiantes y seguir tu posición.",
@@ -166,7 +166,7 @@ const es = {
 
 const de = {
   err_username: "Dieser Benutzername ist nicht verfügbar.", err_cooldown: "Du kannst deinen Benutzernamen einmal alle 7 Tage ändern.",
-  nav_learn: "Lernen", nav_playground: "Spielwiese", nav_leaderboard: "Rangliste", nav_settings: "Einstellungen", nav_profile: "Profil",
+  nav_learn: "Lernen", nav_playground: "Spielwiese", nav_leaderboard: "Rangliste", nav_profile: "Profil",
   sign_in: "Anmelden", sign_out: "Abmelden", create_account: "Konto erstellen", guest: "Gast",
   path_title: "Dein Lernpfad", streak: "Tage in Folge", total_xp: "Gesamt-XP", level: "Level", xp: "XP",
   start: "START", start_lesson: "Lektion starten", practice_again: "Nochmal üben", unlock_msg: "Schließe „{title}“ ab, um diese Lektion freizuschalten.",
@@ -213,7 +213,7 @@ const de = {
   err_invalid: "E-Mail oder Passwort falsch.", err_unconfirmed: "Bitte bestätige zuerst deine E-Mail. Schau in dein Postfach.", err_rate: "Zu viele Versuche. Bitte warte eine Minute.",
   err_weak: "Dieses Passwort ist nicht stark genug.", err_generic: "Etwas ist schiefgelaufen. Bitte versuche es erneut.", err_network: "Server nicht erreichbar. Prüfe deine Verbindung.",
   err_email: "Gib eine gültige E-Mail-Adresse ein.", err_reauth: "Aus Sicherheitsgründen melde dich bitte erneut an und versuche es noch einmal.",
-  welcome_toast: "Angemeldet. Willkommen, {name}!", signed_out: "Abgemeldet", not_configured: "Konten sind auf dieser Seite noch nicht aktiviert.",
+  signed_out: "Abgemeldet", not_configured: "Konten sind auf dieser Seite noch nicht aktiviert.",
   choose_username: "Wähle deinen Benutzernamen", choose_username_text: "So erscheinst du in der Rangliste. Du kannst ihn später ändern (einmal alle 7 Tage).",
   imported: "Dein Fortschritt von diesem Gerät wurde zu deinem Konto hinzugefügt.", demo_banner: "Demo-Modus: Konten werden nur in diesem Browser simuliert.",
 
@@ -237,7 +237,7 @@ const de = {
   unlock_all: "Alle Lektionen freischalten", unlock_all_note: "Springe zu jeder Lektion, ohne die vorherigen abzuschließen.",
   reset_progress: "Fortschritt zurücksetzen", reset_note: "Löscht XP, Serie und abgeschlossene Lektionen auf diesem Gerät.", reset_confirm: "Gesamten Fortschritt zurücksetzen?", cant_undo: "Das lässt sich nicht rückgängig machen.", progress_reset: "Fortschritt zurückgesetzt",
   guest_banner_title: "Du lernst als Gast", guest_banner_text: "Erstelle ein kostenloses Konto, um Fortschritt zu speichern, in der Rangliste mitzumachen und Erinnerungen zu erhalten.",
-  email_label: "E-Mail", password_updated: "Passwort aktualisiert.", member_since: "Mitglied seit {d}",
+  member_since: "Mitglied seit {d}",
 
   lb_title: "Rangliste", lb_week: "Diese Woche", lb_all: "Gesamt", lb_resets: "Zurückgesetzt in {t}", lb_empty: "Noch niemand in der Rangliste. Schließe eine Lektion ab und sichere dir Platz 1!",
   lb_you: "Du", lb_signin_title: "Melde dich an, um die Rangliste zu sehen", lb_signin_text: "Erstelle ein kostenloses Konto, um gegen andere Lernende anzutreten und deinen Rang zu verfolgen.",
@@ -246,7 +246,7 @@ const de = {
 
 const fr = {
   err_username: "Ce nom d'utilisateur n'est pas disponible.", err_cooldown: "Tu peux changer ton nom d'utilisateur une fois tous les 7 jours.",
-  nav_learn: "Apprendre", nav_playground: "Bac à sable", nav_leaderboard: "Classement", nav_settings: "Réglages", nav_profile: "Profil",
+  nav_learn: "Apprendre", nav_playground: "Bac à sable", nav_leaderboard: "Classement", nav_profile: "Profil",
   sign_in: "Se connecter", sign_out: "Se déconnecter", create_account: "Créer un compte", guest: "Invité",
   path_title: "Ton parcours", streak: "Jours d'affilée", total_xp: "XP total", level: "Niveau", xp: "XP",
   start: "DÉMARRER", start_lesson: "Commencer la leçon", practice_again: "S'entraîner encore", unlock_msg: "Termine « {title} » pour débloquer cette leçon.",
@@ -293,7 +293,7 @@ const fr = {
   err_invalid: "E-mail ou mot de passe incorrect.", err_unconfirmed: "Confirme d'abord ton e-mail. Vérifie ta boîte mail.", err_rate: "Trop de tentatives. Attends une minute.",
   err_weak: "Ce mot de passe n'est pas assez sûr.", err_generic: "Une erreur est survenue. Réessaie.", err_network: "Serveur injoignable. Vérifie ta connexion.",
   err_email: "Saisis une adresse e-mail valide.", err_reauth: "Par sécurité, reconnecte-toi puis réessaie.",
-  welcome_toast: "Connecté. Bienvenue, {name} !", signed_out: "Déconnecté", not_configured: "Les comptes ne sont pas encore activés sur ce site.",
+  signed_out: "Déconnecté", not_configured: "Les comptes ne sont pas encore activés sur ce site.",
   choose_username: "Choisis ton nom d'utilisateur", choose_username_text: "C'est ainsi que tu apparaîtras au classement. Tu pourras le changer plus tard (une fois tous les 7 jours).",
   imported: "Ta progression sur cet appareil a été ajoutée à ton compte.", demo_banner: "Mode démo : les comptes sont simulés uniquement dans ce navigateur.",
 
@@ -317,7 +317,7 @@ const fr = {
   unlock_all: "Débloquer toutes les leçons", unlock_all_note: "Accède à n'importe quelle leçon sans terminer les précédentes.",
   reset_progress: "Réinitialiser la progression", reset_note: "Efface XP, série et leçons terminées sur cet appareil.", reset_confirm: "Réinitialiser toute la progression ?", cant_undo: "Cette action est irréversible.", progress_reset: "Progression réinitialisée",
   guest_banner_title: "Tu apprends en tant qu'invité", guest_banner_text: "Crée un compte gratuit pour sauvegarder ta progression, rejoindre le classement et recevoir des rappels.",
-  email_label: "E-mail", password_updated: "Mot de passe mis à jour.", member_since: "Membre depuis {d}",
+  member_since: "Membre depuis {d}",
 
   lb_title: "Classement", lb_week: "Cette semaine", lb_all: "Tous les temps", lb_resets: "Réinitialisation dans {t}", lb_empty: "Personne au classement pour l'instant. Termine une leçon pour prendre la première place !",
   lb_you: "Toi", lb_signin_title: "Connecte-toi pour voir le classement", lb_signin_text: "Crée un compte gratuit pour te mesurer aux autres et suivre ton rang.",
@@ -326,7 +326,7 @@ const fr = {
 
 const sv = {
   err_username: "Det användarnamnet är inte tillgängligt.", err_cooldown: "Du kan ändra ditt användarnamn en gång var 7:e dag.",
-  nav_learn: "Lär dig", nav_playground: "Lekplats", nav_leaderboard: "Topplista", nav_settings: "Inställningar", nav_profile: "Profil",
+  nav_learn: "Lär dig", nav_playground: "Lekplats", nav_leaderboard: "Topplista", nav_profile: "Profil",
   sign_in: "Logga in", sign_out: "Logga ut", create_account: "Skapa konto", guest: "Gäst",
   path_title: "Din lärstig", streak: "Dagar i rad", total_xp: "Total XP", level: "Nivå", xp: "XP",
   start: "STARTA", start_lesson: "Starta lektion", practice_again: "Öva igen", unlock_msg: "Avsluta ”{title}” för att låsa upp den här lektionen.",
@@ -373,7 +373,7 @@ const sv = {
   err_invalid: "Fel e-post eller lösenord.", err_unconfirmed: "Bekräfta din e-post först. Kolla inkorgen.", err_rate: "För många försök. Vänta en minut och försök igen.",
   err_weak: "Lösenordet är inte starkt nog.", err_generic: "Något gick fel. Försök igen.", err_network: "Kan inte nå servern. Kontrollera din anslutning.",
   err_email: "Ange en giltig e-postadress.", err_reauth: "Av säkerhetsskäl: logga in igen och försök på nytt.",
-  welcome_toast: "Inloggad. Välkommen, {name}!", signed_out: "Utloggad", not_configured: "Konton är inte aktiverade på den här sidan ännu.",
+  signed_out: "Utloggad", not_configured: "Konton är inte aktiverade på den här sidan ännu.",
   choose_username: "Välj ditt användarnamn", choose_username_text: "Så visas du på topplistan. Du kan ändra det senare (en gång var 7:e dag).",
   imported: "Dina framsteg från den här enheten lades till i ditt konto.", demo_banner: "Demoläge: konton simuleras bara i den här webbläsaren.",
 
@@ -397,7 +397,7 @@ const sv = {
   unlock_all: "Lås upp alla lektioner", unlock_all_note: "Hoppa till vilken lektion som helst utan att avsluta de förra.",
   reset_progress: "Återställ framsteg", reset_note: "Raderar XP, svit och klara lektioner på den här enheten.", reset_confirm: "Återställa alla framsteg?", cant_undo: "Det går inte att ångra.", progress_reset: "Framsteg återställda",
   guest_banner_title: "Du lär dig som gäst", guest_banner_text: "Skapa ett gratis konto för att spara dina framsteg, vara med på topplistan och få påminnelser.",
-  email_label: "E-post", password_updated: "Lösenordet har uppdaterats.", member_since: "Medlem sedan {d}",
+  member_since: "Medlem sedan {d}",
 
   lb_title: "Topplista", lb_week: "Den här veckan", lb_all: "Genom tiderna", lb_resets: "Nollställs om {t}", lb_empty: "Ingen är på listan än. Avsluta en lektion och ta förstaplatsen!",
   lb_you: "Du", lb_signin_title: "Logga in för att se topplistan", lb_signin_text: "Skapa ett gratis konto för att tävla mot andra och följa din placering.",

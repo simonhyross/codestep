@@ -5,7 +5,6 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? "⌘" : "Ctrl";
 const t = (k, v) => I18N.t(k, v), tn = (k, n) => I18N.tn(k, n);
@@ -429,7 +428,6 @@ view.addEventListener("click", e => {
 });
 
 /* ============================================================ playground */
-let pgCode = null;
 function renderPlayground() {
   const initial = S.pg ?? EXAMPLES[0].code;
   view.innerHTML = `<div class="pg">
@@ -625,7 +623,6 @@ function renderFinish() {
 
 /* ============================================================ router */
 const routes = {};   // extra pages registered by account.js: name -> fn(arg)
-const currentRoute = () => (location.hash.split("/")[1] || "learn");
 function route() {
   const [, r, arg] = (location.hash || "#/learn").split("/");
   if (r === "lesson") { if (!L || L.lesson.id !== arg) { closeLesson(); openLesson(arg); } return; }
@@ -687,10 +684,8 @@ I18N.setLang(S.lang || I18N.detect());
 offRuntime && offRuntime(); offRuntime = paintRuntime();
 applyTheme(); route();
 window.App = {
-  get S() { return S; }, get signedIn() { return signedIn; }, save, view, modal, toast, t, tn, esc, ico, pip, MOD, $, $$, ICON, hooks, routes, UNITS,
+  get S() { return S; }, get signedIn() { return signedIn; }, save, view, modal, toast, t, tn, esc, ico, pip, MOD, $, $$, hooks, routes,
   applyTheme, setLanguage, applyServerProgress, enterAccount, leaveAccount, clearGuestProgress, guestDoneLessons,
-  refresh: route, setGoal: n => { S.goal = n; save(); }, level, levelName, dayKey, XP_PER_LEVEL,
+  refresh: route, setGoal: n => { S.goal = n; save(); },
 };
-window.__pythonic = { Py, pip, S: () => S }; // handy for debugging in the console
-document.dispatchEvent(new Event("app-ready"));
 })();
