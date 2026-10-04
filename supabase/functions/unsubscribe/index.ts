@@ -18,7 +18,7 @@ Deno.serve(async req => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
     const { error } = await admin.rpc("set_email_pref", { p_user: u, p_kind: k, p_value: false });
     if (error) { console.error(error); return page("Something went wrong", "<p>Please try again later.</p>"); }
-    return page("You're unsubscribed", "<p>You won't get these emails any more. You can turn them back on in Pythonic settings.</p>");
+    return page("You're unsubscribed", "<p>You won't get these emails any more. You can turn them back on in Codestep settings.</p>");
   }
   if (req.method === "GET") return page("Unsubscribe?", `<p>Stop receiving ${k === "digest" ? "weekly summary" : "daily reminder"} emails?</p><form method="POST"><button style="background:#2f6bff;color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:700;font-size:15px;cursor:pointer">Unsubscribe</button></form>`);
   return new Response("method not allowed", { status: 405 });

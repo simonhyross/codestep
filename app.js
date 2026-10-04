@@ -9,13 +9,6 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? "⌘" : "Ctrl";
 const t = (k, v) => I18N.t(k, v), tn = (k, n) => I18N.tn(k, n);
 
-const ICON = {
-  sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
-  moon: '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>',
-  x: '<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>',
-  play: '<svg viewBox="0 0 24 24" width="16" height="16" style="fill:currentColor;stroke:none"><path d="M7 4.5v15a1 1 0 001.5.9l12-7.5a1 1 0 000-1.8l-12-7.5A1 1 0 007 4.5z"/></svg>',
-};
-
 const ICONS = {
   sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
   hash: '<path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>',
@@ -45,6 +38,15 @@ const ICONS = {
   star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  play: '<path d="M7 4.5v15a1 1 0 001.5.9l12-7.5a1 1 0 000-1.8l-12-7.5A1 1 0 007 4.5z"/>',
+  pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  first: '<path d="M6 5v14"/><path d="M18 6l-9 6 9 6z"/>',
+  prev: '<path d="M17 6l-9 6 9 6z"/>',
+  next: '<path d="M7 6l9 6-9 6z"/>',
+  last: '<path d="M18 5v14"/><path d="M6 6l9 6-9 6z"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
 };
@@ -58,8 +60,8 @@ const DECO = [
   '<path d="M0 56l20-20 20 20 20-20 20 20 20-20v18l-20 20-20-20-20 20-20-20-20 20z"/>',
 ];
 
-/* ============================================================ mascot: Pip the snake */
-function pip(mood = "happy", size = 80, extra = "") {
+/* ============================================================ mascot: Bit the snake */
+function mascot(mood = "happy", size = 80, extra = "") {
   const ink = "#0b1b3a", Y = "#ffc931", B = "#2f6bff";
   const look = { happy: [0, 1], think: [3, -3], oops: [0, 2], cheer: [0, 0] }[mood] || [0, 1];
   const eye = cx => mood === "cheer"
@@ -67,7 +69,7 @@ function pip(mood = "happy", size = 80, extra = "") {
     : `<g class="eye"><ellipse cx="${cx}" cy="46" rx="10.5" ry="11.5" fill="#fff" stroke="${ink}" stroke-width="3"/><circle cx="${cx + look[0]}" cy="${46 + look[1]}" r="5.6" fill="${ink}"/><circle cx="${cx + look[0] + 2}" cy="${46 + look[1] - 2}" r="1.9" fill="#fff"/></g>`;
   const line = d => `<path d="${d}" fill="none" stroke="${ink}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`;
   const mouth = {
-    happy: line("M49 63 Q60 74 71 63") + `<path d="M60 71 v8 M60 79 l-3.5 4.5 M60 79 l3.5 4.5" fill="none" stroke="#ff5a5f" stroke-width="2.8" stroke-linecap="round"/>`,
+    happy: line("M47 63 Q60 77 73 63"),
     cheer: `<path d="M45 61 Q60 86 75 61 Z" fill="${ink}" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M52 72 Q60 80 68 72 Q60 67 52 72Z" fill="#ff5a5f"/>`,
     think: line("M52 68 Q61 64 70 69"),
     oops: line("M49 72 Q60 61 71 72"),
@@ -77,24 +79,25 @@ function pip(mood = "happy", size = 80, extra = "") {
     oops: line("M35 36 L50 29") + line("M85 36 L70 29") + `<path d="M95 30 q7 10 0 15 q-7 -5 0 -15z" fill="#8dbbff" stroke="${ink}" stroke-width="2"/>`,
     cheer: `<path d="M16 22 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="${B}"/><path d="M102 24 l2.5 5.5 5.5 2.5 -5.5 2.5 -2.5 5.5 -2.5 -5.5 -5.5 -2.5 5.5 -2.5z" fill="${B}"/>`,
   }[mood] || "";
-  const tail = "M62 74 C62 104 100 94 98 114";
-  return `<span class="pip pip-${mood} ${extra}" style="width:${size}px" aria-hidden="true"><svg viewBox="0 0 120 130">
-    <ellipse cx="62" cy="126" rx="34" ry="4" fill="${ink}" opacity=".13"/>
-    <path d="${tail}" fill="none" stroke="${ink}" stroke-width="37" stroke-linecap="round"/>
-    <path d="${tail}" fill="none" stroke="${Y}" stroke-width="29" stroke-linecap="round"/>
-    <circle cx="68" cy="96" r="4.2" fill="${B}"/><circle cx="84" cy="100" r="3.6" fill="${B}"/><circle cx="95" cy="108" r="3" fill="${B}"/>
-    <ellipse cx="60" cy="49" rx="37" ry="33" fill="${Y}" stroke="${ink}" stroke-width="4"/>
-    <ellipse cx="42" cy="27" rx="13" ry="5.5" fill="#fff" opacity=".55" transform="rotate(-24 42 27)"/>
-    ${eye(44)}${eye(76)}
+  const body = "M20 74 C20 40 38 24 60 24 C82 24 100 40 100 74 C100 100 84 114 60 114 C36 114 20 100 20 74Z";
+  return `<span class="mascot mascot-${mood} ${extra}" style="width:${size}px" aria-hidden="true"><svg viewBox="0 0 120 130">
+    <ellipse cx="60" cy="125" rx="36" ry="4" fill="${ink}" opacity=".13"/>
+    <ellipse cx="44" cy="115" rx="11" ry="6.5" fill="${B}" stroke="${ink}" stroke-width="3.5"/><ellipse cx="76" cy="115" rx="11" ry="6.5" fill="${B}" stroke="${ink}" stroke-width="3.5"/>
+    <g class="antenna"><path d="M45 28 Q40 12 28 10" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="10" r="6" fill="${B}" stroke="${ink}" stroke-width="3.5"/>
+    <path d="M75 28 Q80 12 92 10" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/><circle cx="93" cy="10" r="6" fill="${B}" stroke="${ink}" stroke-width="3.5"/></g>
+    <path d="${body}" fill="${Y}" stroke="${ink}" stroke-width="4"/>
+    <ellipse cx="42" cy="40" rx="13" ry="5.5" fill="#fff" opacity=".55" transform="rotate(-28 42 40)"/>
+    <circle cx="31" cy="92" r="4.2" fill="${B}"/><circle cx="89" cy="92" r="4.2" fill="${B}"/><circle cx="60" cy="104" r="3.6" fill="${B}"/>
+    <g transform="translate(0 12)">${eye(44)}${eye(76)}
     <circle cx="32" cy="62" r="5.5" fill="#ff7a59" opacity=".5"/><circle cx="88" cy="62" r="5.5" fill="#ff7a59" opacity=".5"/>
-    ${mouth}${extras}</svg></span>`;
+    ${mouth}${extras}</g></svg></span>`;
 }
 const say = (kind, i) => { const a = I18N.list("say_" + kind); return a[(i * 7 + kind.length) % a.length]; };
 
 /* ============================================================ state */
-const KEY = "pythonic:v1";
-const PROGRESS_KEYS = ["xp", "streak", "last", "daily", "done"];
-const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, theme: null, lang: null, goal: 50, unlockAll: false, pg: null };
+const KEY = "codestep:v1";
+const PROGRESS_KEYS = ["xp", "streak", "last", "daily", "done", "srs"];
+const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, srs: {}, theme: null, lang: null, goal: 50, unlockAll: false, pg: null };
 let S, signedIn = false, guestSaved = null;      // while signed in, progress mirrors the server and is never written to localStorage
 try { S = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { S = { ...defaults }; }
 const pickProgress = o => Object.fromEntries(PROGRESS_KEYS.map(k => [k, o[k]]));
@@ -119,8 +122,9 @@ const levelName = () => { const a = I18N.list("level_names"); return a[Math.min(
 const goal = () => S.goal || 50;
 
 /* ---- account bridge: swap between guest progress (localStorage) and server progress ---- */
-function applyServerProgress(p) {
+function applyServerProgress(p, withReviews) {
   S.xp = p.xp; S.streak = p.streak; S.daily = p.daily || {};
+  if (withReviews) S.srs = Object.fromEntries((p.reviews || []).map(r => [r.k, { reps: r.reps, interval: r.interval, ease: +r.ease, lapses: r.lapses, due: r.due, last: r.due }]));
   S.done = Object.fromEntries((p.done || []).map(id => [id, true]));
   S.last = p.streak > 0 ? (p.today_xp > 0 ? dayKey() : dayKey(dayOffset(-1))) : null;
 }
@@ -128,20 +132,48 @@ function enterAccount() { if (!signedIn) { guestSaved = structuredClone(pickProg
 function leaveAccount() { if (signedIn) { Object.assign(S, structuredClone(guestSaved)); signedIn = false; guestSaved = null; } }
 const guestDoneLessons = () => Object.keys((signedIn ? guestSaved : S).done || {});
 function clearGuestProgress() { const fresh = pickProgress(structuredClone(defaults)); if (signedIn) guestSaved = fresh; else Object.assign(S, fresh); save(); }
-const hooks = { step: null };
+const hooks = { step: null, review: null, seed: null };
 
 const FLAT = [];
 UNITS.forEach(u => u.lessons.forEach(l => FLAT.push({ unit: u, lesson: l, i: FLAT.length })));
 const lessonById = id => FLAT.find(x => x.lesson.id === id);
 const isUnlocked = i => S.unlockAll || i === 0 || !!S.done[FLAT[i - 1].lesson.id];
 const currentLesson = () => FLAT.find(x => !S.done[x.lesson.id]);
-const lessonXp = l => l.steps.reduce((a, s) => a + (s.type === "quiz" ? 5 : s.type === "code" ? 15 : 0), 20);
+const STEP_XP = { quiz: 5, predict: 5, code: 15 };
+const lessonXp = l => l.steps.reduce((a, s) => a + (STEP_XP[s.type] || 0), 20);
+
+/* ============================================================ spaced review */
+const STEP_BY_KEY = {};                       // "loops:2" -> { lesson, step }
+FLAT.forEach(f => f.lesson.steps.forEach((step, i) => { if (STEP_XP[step.type]) STEP_BY_KEY[`${f.lesson.id}:${i}`] = { lesson: f.lesson, step }; }));
+const validReviews = () => Object.fromEntries(Object.entries(S.srs).filter(([k]) => STEP_BY_KEY[k]));
+const reviewStats = () => Srs.stats(validReviews(), dayKey());
+const kindOf = k => (STEP_BY_KEY[k].step.type === "code" ? "code" : "quiz");
+
+function recordReview(key, quality) {
+  const item = Srs.next(S.srs[key], quality, dayKey());
+  S.srs[key] = item; save();
+  hooks.review && hooks.review(key, quality, item);
+  updateDueBadge();
+}
+/** Exercises finished before reviews existed (or on another device) get starter items, spread over the next 3 days. */
+function seedReviews() {
+  const keys = Object.keys(STEP_BY_KEY).filter(k => S.done[STEP_BY_KEY[k].lesson.id] && !S.srs[k]);
+  if (!keys.length) return;
+  const items = Srs.seed(keys, dayKey());
+  Object.assign(S.srs, items); save();
+  hooks.seed && hooks.seed(keys.map(k => ({ k, due: items[k].due, interval: items[k].interval })));
+  updateDueBadge();
+}
+function updateDueBadge() {
+  const due = reviewStats().due;
+  $$(".due-badge").forEach(b => { b.textContent = due > 99 ? "99+" : due; b.hidden = !due; });
+}
 
 /* ============================================================ theme */
 function applyTheme() {
   const th = (S.theme && S.theme !== "system") ? S.theme : (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   document.documentElement.dataset.theme = th;
-  $("#btn-theme").innerHTML = th === "dark" ? ICON.sun : ICON.moon;
+  $("#btn-theme").innerHTML = th === "dark" ? ico("sun") : ico("moon");
 }
 
 /* ============================================================ python runtime (web worker) */
@@ -155,14 +187,15 @@ const Py = (() => {
       py.runPython(${JSON.stringify(window.PY_RUNTIME)});
       self.__run = py.globals.get("run_code");
       self.__lint = py.globals.get("lint");
+      self.__trace = py.globals.get("trace_code");
       postMessage({ type: "ready" });
     })().catch(e => postMessage({ type: "fatal", error: String(e) }));
     onmessage = async (e) => {
       const m = e.data;
       await ready;
       try {
-        const result = m.kind === "run"
-          ? JSON.parse(self.__run(m.code, m.tests ?? null, !!m.profile))
+        const result = m.kind === "run" ? JSON.parse(self.__run(m.code, m.tests ?? null, !!m.profile))
+          : m.kind === "trace" ? JSON.parse(self.__trace(m.code))
           : JSON.parse(self.__lint(m.code));
         postMessage({ id: m.id, result });
       } catch (err) { postMessage({ id: m.id, result: { fatal: String(err) } }); }
@@ -209,6 +242,7 @@ const Py = (() => {
     get status() { return status; },
     onStatus(f) { listeners.add(f); f(status); return () => listeners.delete(f); },
     run: (code, { tests = null, profile = false, timeout = 8000 } = {}) => call({ kind: "run", code, tests, profile }, timeout),
+    trace: code => call({ kind: "trace", code }, 15000),
     lint: code => call({ kind: "lint", code }),
   };
 })();
@@ -255,6 +289,13 @@ function highlight(root) {
     const text = el.textContent;
     if (/^[\s\d/\\|_-]+$/.test(text)) return;
     el.textContent = ""; CodeMirror.runMode(text, "python", el);
+    const pre = el.parentElement;
+    if (pre.hasAttribute("data-run")) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "runbtn"; b.innerHTML = `${ico("play", "fill")} ${t("viz_visualize")}`;
+      b.onclick = () => Visualizer.open({ code: text });
+      pre.appendChild(b);
+    }
   });
   $$(".codeblock[data-code]", root).forEach(el => { const t = el.dataset.code; el.textContent = ""; CodeMirror.runMode(t, "python", el); });
 }
@@ -304,7 +345,7 @@ function makeConsole(onJump) {
   let tab = "out", out = { kind: "idle" }, probs = [];
 
   function renderOut() {
-    if (out.kind === "idle") return `<div class="empty">${pip("think", 52)}<span>${t("press_run", { b: "<b>" + esc(t("run")) + "</b>", k: MOD })}</span></div>`;
+    if (out.kind === "idle") return `<div class="empty">${mascot("think", 52)}<span>${t("press_run", { b: "<b>" + esc(t("run")) + "</b>", k: MOD })}</span></div>`;
     if (out.kind === "running") return `<div class="running"><span class="spin"></span>${Py.status === "ready" ? t("running") : t("warming")}</div>`;
     const r = out.r;
     if (r.timeout) return `<div class="errbox"><b>${t("stopped")}</b>: ${t("stopped_text", { n: r.limit || 8 })}<div class="h">${t("stopped_hint")}</div></div>`;
@@ -406,14 +447,15 @@ function renderLearn() {
   const week = Array.from({ length: 7 }, (_, i) => { const d = dayOffset(i - 6); return { l: [...t("weekdays")][d.getDay()], on: (S.daily[dayKey(d)] || 0) > 0, today: i === 6 }; });
   const doneCount = FLAT.filter(x => S.done[x.lesson.id]).length;
   const sk = currentStreak();
-  const greeting = `<div class="card pipcard">${pip(sk ? "happy" : "think", 74)}<p><strong>${window.Account && Account.name() ? t("pip_welcome", { name: esc(Account.name()) }) : sk ? t("pip_streak", { n: sk }) : t("pip_hi")}</strong>${sk ? t("pip_more") : window.Account && Account.name() ? t("pip_ready") : t("pip_guide")}</p></div>`;
-  const rail = `${greeting}
+  const greeting = `<div class="card mascotcard">${mascot(sk ? "happy" : "think", 74)}<p><strong>${window.Account && Account.name() ? t("mascot_welcome", { name: esc(Account.name()) }) : sk ? t("mascot_streak", { n: sk }) : t("mascot_hi")}</strong>${sk ? t("mascot_more") : window.Account && Account.name() ? t("mascot_ready") : t("mascot_guide")}</p></div>`;
+  const rev = reviewCard();
+  const rail = `${greeting}${rev}
     <div class="card"><h3>${t("daily_goal")}</h3><div class="goal">
       <div class="ring"><svg viewBox="0 0 84 84"><circle class="trk" cx="42" cy="42" r="35" fill="none"/><circle class="val" cx="42" cy="42" r="35" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg><b>${pct >= 1 ? "✓" : today}</b></div>
       <p><strong>${pct >= 1 ? t("goal_reached") : t("xp_to_go", { n: goal() - today })}</strong>${t("goal_text", { n: goal() })}</p></div></div>
     <div class="card"><h3>${t("level")}</h3><div class="lvl-top"><b>${t("level_line", { n: level(), name: levelName() })}</b><span>${lv}/${XP_PER_LEVEL} XP</span></div><div class="lvl-bar"><i style="width:${lv}%"></i></div><span class="chip">${t("lessons_done", { done: doneCount, total: FLAT.length })}</span></div>
     <div class="card"><h3>${t("this_week")}</h3><div class="week">${week.map(d => `<div class="${d.on ? "on" : ""} ${d.today ? "today" : ""}"><i>${d.on ? ico("flame", "fill") : ""}</i>${d.l}</div>`).join("")}</div></div>`;
-  view.innerHTML = `<div class="topbar"><h1>${t("path_title")}</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet">${greeting}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
+  view.innerHTML = `<div class="topbar"><h1>${t("path_title")}</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet">${greeting}${rev}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
 }
 function popover(f, state) {
   const l = f.lesson, mins = Math.max(3, Math.round(l.steps.length * 1.2));
@@ -435,8 +477,9 @@ function renderPlayground() {
       <select class="select" id="pg-ex" aria-label="${esc(t("examples"))}"><option value="">${t("examples")}</option>${EXAMPLES.map((e, i) => `<option value="${i}">${esc(e.name)}</option>`).join("")}</select>
       <button class="btn btn-ghost btn-sm" id="pg-copy">${t("copy")}</button>
       <button class="btn btn-ghost btn-sm" id="pg-clear">${t("clear")}</button>
+      <button class="btn btn-ghost btn-sm" id="pg-viz">${ico("eye")} ${t("viz_visualize")}</button>
       <button class="btn btn-ghost btn-sm" id="pg-prof" title="${esc(t("run_profile_tip"))}">${ico("timer")} ${t("run_profile")}</button>
-      <button class="btn btn-primary btn-sm" id="pg-run">${ICON.play} ${t("run")} <span class="kbd">${MOD}↵</span></button></div>
+      <button class="btn btn-primary btn-sm" id="pg-run">${ico("play", "fill")} ${t("run")} <span class="kbd">${MOD}↵</span></button></div>
     <div class="pg-grid"><div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>main.py</span><span class="sp"></span></div><div class="ide-ed"></div>
       <div class="statusline"><span class="pill ok" id="pg-pill">✓ ${t("no_problems")}</span><span id="pg-pos">${t("ln_col", { l: 1, c: 1 })}</span><span style="margin-left:auto">UTF-8 · Spaces: 4</span></div></div>
       <div class="pg-out"></div></div></div>`;
@@ -466,6 +509,7 @@ function renderPlayground() {
   $("#pg-pill").onclick = () => cons.showTab("prob");
   $("#pg-run").onclick = () => run(false);
   $("#pg-prof").onclick = () => run(true);
+  $("#pg-viz").onclick = () => Visualizer.open({ code: cm.getValue() });
   $("#pg-clear").onclick = () => { cm.setValue(""); cm.focus(); };
   $("#pg-copy").onclick = () => navigator.clipboard.writeText(cm.getValue()).then(() => toast(t("copied")), () => toast(t("copy_fail")));
   $("#pg-ex").onchange = e => { if (e.target.value === "") return; cm.setValue(EXAMPLES[+e.target.value].code); e.target.value = ""; cm.focus(); };
@@ -479,8 +523,11 @@ function openLesson(id) {
   const f = lessonById(id);
   if (!f || !isUnlocked(f.i)) { location.hash = "#/learn"; return; }
   L = { f, lesson: f.lesson, i: 0, replay: !!S.done[id], xp: 0, graded: 0, first: 0, token: 0 };
+  mountLesson();
+}
+function mountLesson() {
   $("#shell").hidden = true; lroot.hidden = false;
-  lroot.innerHTML = `<header class="l-top"><button class="l-close" aria-label="${esc(t("quit"))}">${ICON.x}</button><div class="l-progress"></div><div class="stat xp" id="l-xp">${ico("bolt", "fill")}<b>0</b></div></header><section class="l-body" id="l-body"></section><footer class="l-foot" id="l-foot"><div class="l-foot-in"></div></footer>`;
+  lroot.innerHTML = `<header class="l-top"><button class="l-close" aria-label="${esc(t("quit"))}">${ico("x")}</button><div class="l-progress"></div>${L.review ? "" : `<div class="stat xp" id="l-xp">${ico("bolt", "fill")}<b>0</b></div>`}</header><section class="l-body" id="l-body"></section><footer class="l-foot" id="l-foot"><div class="l-foot-in"></div></footer>`;
   $(".l-close", lroot).onclick = () => {
     if (L.i === 0 && !L.xp) return (location.hash = "#/learn");
     modal({ title: t("quit_title"), text: t("quit_text"), actions: [{ label: t("keep_going"), cls: "btn-primary" }, { label: t("quit"), cls: "btn-ghost", onClick: () => (location.hash = "#/learn") }] });
@@ -500,18 +547,23 @@ function gain(n) {
   const x = $("#l-xp"); if (x) { $("b", x).textContent = L.xp; x.classList.remove("bump"); void x.offsetWidth; x.classList.add("bump"); }
   return n;
 }
+function reportResult(step, quality) {
+  if (step._retry) return;                                       // a second attempt in the same session doesn't change the schedule
+  recordReview(step._key || `${L.lesson.id}:${L.i}`, quality);
+  if (L.review && quality === "again") L.lesson.steps.push({ ...step, _retry: true });   // ask it once more at the end
+}
 function next() { L.i++; renderStep(); }
 
 function renderStep() {
   const step = L.lesson.steps[L.i];
-  if (!step) return renderFinish();
+  if (!step) return L.review ? renderReviewFinish() : renderFinish();
   progressBar();
   const body = $("#l-body"); body.scrollTop = 0;
-  ({ learn: renderLearnStep, quiz: renderQuiz, code: renderCodeStep })[step.type](step, body);
+  ({ learn: renderLearnStep, quiz: renderQuiz, predict: renderPredict, code: renderCodeStep })[step.type](step, body);
 }
 
 function renderLearnStep(step, body) {
-  body.innerHTML = `<div class="l-wrap"><div class="learn-card"><div class="kicker">${esc(L.lesson.title)}</div><h2>${esc(step.title)}</h2><div class="pipsay">${pip("happy", 64)}<div class="bubble">${say("learn", L.i)}</div></div><div class="prose">${step.html}</div></div></div>`;
+  body.innerHTML = `<div class="l-wrap"><div class="learn-card"><div class="kicker">${esc(L.lesson.title)}</div><h2>${esc(step.title)}</h2><div class="mascotsay">${mascot("happy", 64)}<div class="bubble">${say("learn", L.i)}</div></div><div class="prose">${step.html}</div></div></div>`;
   highlight(body); initWidgets(body);
   foot(`<span class="kbd-hint">${t("to_continue", { k: `<kbd>${MOD} ↵</kbd>` })}</span><span class="grow"></span><button class="btn btn-primary" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
   $("#go").onclick = next;
@@ -520,7 +572,7 @@ function renderLearnStep(step, body) {
 function renderQuiz(step, body) {
   const order = step.options.map((_, i) => i).sort(() => Math.random() - .5);
   let sel = null, tries = 0, locked = false;
-  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">${t("quick_check")}</div><div class="pipsay">${pip("think", 64)}<div class="bubble">${say("quiz", L.i)}</div></div><h2>${esc(step.q)}</h2>${step.code ? `<pre class="codeblock" data-code="${esc(step.code)}"></pre>` : ""}<div class="opts" role="listbox">${order.map((o, k) => `<button class="opt" data-o="${o}"><span class="k">${k + 1}</span><span class="${/[\[\]\(\)\{\}=*%\/]|^[\d,. ]+$/.test(step.options[o]) ? "t" : ""}">${esc(step.options[o])}</span></button>`).join("")}</div><div class="kbd-hint">${t("press_choose", { a: "<kbd>1</kbd>", b: `<kbd>${order.length}</kbd>`, k: `<kbd>${MOD} ↵</kbd>` })}</div></div>`;
+  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">${t(L.review ? "review_kicker" : "quick_check")}</div><div class="mascotsay">${mascot("think", 64)}<div class="bubble">${say("quiz", L.i)}</div></div><h2>${esc(step.q)}</h2>${step.code ? `<pre class="codeblock" data-code="${esc(step.code)}"></pre>` : ""}<div class="opts" role="listbox">${order.map((o, k) => `<button class="opt" data-o="${o}"><span class="k">${k + 1}</span><span class="${/[\[\]\(\)\{\}=*%\/]|^[\d,. ]+$/.test(step.options[o]) ? "t" : ""}">${esc(step.options[o])}</span></button>`).join("")}</div><div class="kbd-hint">${t("press_choose", { a: "<kbd>1</kbd>", b: `<kbd>${order.length}</kbd>`, k: `<kbd>${MOD} ↵</kbd>` })}</div></div>`;
   highlight(body);
   const opts = $$(".opt", body);
   const idle = () => foot(`<span class="grow"></span><button class="btn btn-primary" id="chk" ${sel === null ? "disabled" : ""}>${t("check")} <span class="kbd">${MOD}↵</span></button>`) && ($("#chk").onclick = check);
@@ -535,21 +587,60 @@ function renderQuiz(step, body) {
     L.graded += tries === 0 ? 1 : 0;
     if (ok) {
       locked = true; if (tries === 0) L.first++;
+      reportResult(step, tries === 0 ? "good" : "hard");
       chosen.classList.replace("sel", "right"); opts.forEach(o => (o.disabled = true));
       const g = gain(tries === 0 ? 5 : 2);
-      setFoot("good", `<div class="fb"><span class="fb-pip">${pip("cheer", 58)}</span><div class="fb-text"><h4>${t("correct")}${g ? ` +${g} XP` : ""}</h4><p>${esc(step.explain)}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("good", `<div class="fb"><span class="fb-mascot">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("correct")}${g ? ` +${g} XP` : ""}</h4><p>${esc(step.explain)}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       $("#go").onclick = next; return;
     }
     tries++; chosen.classList.replace("sel", "wrong");
     const why = step.why && step.why[sel];
     if (tries >= 2) {
-      locked = true; opts.forEach(o => { o.disabled = true; if (+o.dataset.o === step.answer) o.classList.add("right"); });
-      setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>${t("correct_answer", { a: esc(step.options[step.answer]) })}</h4><p>${why ? esc(why) + " " : ""}${esc(step.explain)}</p></div></div><button class="btn btn-bad" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      locked = true; reportResult(step, "again");
+      opts.forEach(o => { o.disabled = true; if (+o.dataset.o === step.answer) o.classList.add("right"); });
+      setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("correct_answer", { a: esc(step.options[step.answer]) })}</h4><p>${why ? esc(why) + " " : ""}${esc(step.explain)}</p></div></div><button class="btn btn-bad" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       $("#go").onclick = next; return;
     }
     locked = true; opts.forEach(o => (o.disabled = true));
-    setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(why || t("look_again"))}</p></div></div><button class="btn btn-bad" id="again">${t("try_again")} <span class="kbd">${MOD}↵</span></button>`);
+    setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(why || t("look_again"))}</p></div></div><button class="btn btn-bad" id="again">${t("try_again")} <span class="kbd">${MOD}↵</span></button>`);
     $("#again").onclick = () => { locked = false; opts.forEach(o => { o.disabled = false; o.classList.remove("wrong", "sel"); }); sel = null; idle(); };
+  }
+  idle();
+}
+
+function renderPredict(step, body) {
+  const norm = x => x.split("\n").map(l => l.trimEnd()).join("\n").trim();
+  let tries = 0, locked = false;
+  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">${t("predict_kicker")}</div><div class="mascotsay">${mascot("think", 64)}<div class="bubble">${say("quiz", L.i)}</div></div><h2>${t("predict_q")}</h2>
+    <pre class="codeblock" data-code="${esc(step.code)}"></pre>
+    <textarea class="input predict-box" id="pred" rows="${Math.min(8, step.answer.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="${esc(t("predict_placeholder"))}"></textarea>
+    <div class="kbd-hint">${t("predict_hint")}</div></div>`;
+  highlight(body);
+  const box = $("#pred", body); box.focus();
+  const idle = () => { foot(`<span class="grow"></span><button class="btn btn-primary" id="chk" ${box.value.trim() ? "" : "disabled"}>${t("check")} <span class="kbd">${MOD}↵</span></button>`); $("#chk").onclick = check; };
+  const watch = `<button class="btn btn-ghost btn-sm" id="watch">${ico("eye")} ${t("predict_watch")}</button>`;
+  const bindWatch = () => { const w = $("#watch"); if (w) w.onclick = () => Visualizer.open({ code: step.code }); };
+  box.oninput = idle;
+  box.onkeydown = e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); if (!locked) check(); else $("#l-foot .btn-good, #l-foot .btn-bad")?.click(); } };
+  function check() {
+    if (locked || !box.value.trim()) return;
+    const ok = norm(box.value) === norm(step.answer);
+    L.graded += tries === 0 ? 1 : 0;
+    if (ok) {
+      locked = true; box.readOnly = true; if (tries === 0) L.first++;
+      reportResult(step, tries === 0 ? "good" : "hard");
+      const g = gain(tries === 0 ? 5 : 2);
+      setFoot("good", `<div class="fb"><span class="fb-pip">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("predict_right")}${g ? ` +${g} XP` : ""}</h4></div></div>${watch}<button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      bindWatch(); $("#go").onclick = next; return;
+    }
+    tries++;
+    if (tries >= 2) {
+      locked = true; box.readOnly = true; reportResult(step, "again");
+      setFoot("bad", `<div class="fb"><span class="fb-pip">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("predict_answer")}</h4><p><code>${esc(step.answer).split("\n").join(" ⏎ ")}</code></p></div></div>${watch}<button class="btn btn-bad" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      bindWatch(); $("#go").onclick = next; return;
+    }
+    setFoot("bad", `<div class="fb"><span class="fb-pip">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${t("predict_wrong")}</p></div></div>${watch}<button class="btn btn-bad" id="again">${t("try_again")} <span class="kbd">${MOD}↵</span></button>`);
+    bindWatch(); $("#again").onclick = () => { idle(); box.focus(); };
   }
   idle();
 }
@@ -558,7 +649,7 @@ function renderCodeStep(step, body) {
   const token = ++L.token;
   let attempts = 0, hintUsed = false, shown = false, busy = false, graded = false, passed = false;
   body.innerHTML = `<div class="l-wrap wide"><div class="code-step">
-    <div class="task"><div class="card"><div class="kicker">${t("challenge")}</div><h2>${esc(L.lesson.title)}</h2><div class="pipsay">${pip("happy", 54)}<div class="bubble">${say("code", L.i)}</div></div><div class="prose" style="margin-top:14px">${step.prompt}</div></div><div id="hintslot"></div></div>
+    <div class="task"><div class="card"><div class="kicker">${t("challenge")}</div><h2>${esc(step._title || L.lesson.title)}</h2><div class="mascotsay">${mascot("happy", 54)}<div class="bubble">${say("code", L.i)}</div></div><div class="prose" style="margin-top:14px">${step.prompt}</div></div><div id="hintslot"></div></div>
     <div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>solution.py</span><span class="sp"></span></div><div class="ide-ed"></div></div></div></div>`;
   highlight($(".task", body));
   const cons = makeConsole((l, c) => jumpTo(cm)(l, c));
@@ -567,9 +658,10 @@ function renderCodeStep(step, body) {
   setTimeout(() => cm.focus(), 50);
 
   const controls = () => {
-    foot(`<button class="btn btn-ghost btn-sm" id="hint">${ico("bulb")} ${t("hint")}</button><button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button><span class="grow"></span><button class="btn btn-ghost" id="run">${ICON.play} ${t("run")}</button><button class="btn btn-primary" id="chk">${t("check")} <span class="kbd">${MOD}↵</span></button>`);
-    $("#hint").onclick = () => { hintUsed = true; $("#hintslot", body).innerHTML = `<div class="hintbox">${pip("think", 44)}<span><b>${t("hint_from")}</b> ${esc(step.hint)}</span></div>`; };
+    foot(`<button class="btn btn-ghost btn-sm" id="hint">${ico("bulb")} ${t("hint")}</button><button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button><button class="btn btn-ghost btn-sm" id="viz">${ico("eye")} ${t("viz_visualize")}</button><span class="grow"></span><button class="btn btn-ghost" id="run">${ico("play", "fill")} ${t("run")}</button><button class="btn btn-primary" id="chk">${t("check")} <span class="kbd">${MOD}↵</span></button>`);
+    $("#hint").onclick = () => { hintUsed = true; $("#hintslot", body).innerHTML = `<div class="hintbox">${mascot("think", 44)}<span><b>${t("hint_from")}</b> ${esc(step.hint)}</span></div>`; };
     $("#reset").onclick = () => { cm.setValue(step.starter); cm.focus(); };
+    $("#viz").onclick = () => Visualizer.open({ code: cm.getValue() });
     $("#run").onclick = () => exec(false);
     $("#chk").onclick = () => check();
     if (hintUsed) $("#hint").disabled = true;
@@ -589,14 +681,15 @@ function renderCodeStep(step, body) {
     attempts++;
     if (r.passed) {
       passed = true;
+      reportResult(step, shown ? "again" : attempts === 1 && !hintUsed ? "good" : "hard");
       if (!graded) { graded = true; L.graded++; if (attempts === 1 && !hintUsed && !shown) L.first++; }
       const g = gain(shown ? 0 : attempts === 1 && !hintUsed ? 15 : hintUsed || attempts > 2 ? 5 : 10);
-      setFoot("good", `<div class="fb"><span class="fb-pip">${pip("cheer", 58)}</span><div class="fb-text"><h4>${t("brilliant")}${g ? ` +${g} XP` : ""}</h4><p>${t("all_tests")}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("good", `<div class="fb"><span class="fb-mascot">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("brilliant")}${g ? ` +${g} XP` : ""}</h4><p>${t("all_tests")}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       $("#go").onclick = next; return;
     }
     if (!graded) { graded = true; L.graded++; }
     const msg = r.timeout ? t("too_long") : r.error ? t("has_error") : (r.message || t("not_right"));
-    setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(msg)}</p></div></div>${attempts >= 3 && !shown ? `<button class="btn btn-ghost btn-sm" id="sol">${t("show_solution")}</button>` : ""}<button class="btn btn-bad" id="again">${t("try_again")}</button>`);
+    setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(msg)}</p></div></div>${attempts >= 3 && !shown ? `<button class="btn btn-ghost btn-sm" id="sol">${t("show_solution")}</button>` : ""}<button class="btn btn-bad" id="again">${t("try_again")}</button>`);
     $("#again").onclick = () => { controls(); cm.focus(); };
     const sol = $("#sol"); if (sol) sol.onclick = () => { shown = true; cm.setValue(step.solution); controls(); toast(t("sol_loaded")); };
   }
@@ -613,7 +706,7 @@ function renderFinish() {
   $(".l-progress", lroot).innerHTML = L.lesson.steps.map(() => `<i class="done"></i>`).join("");
   const acc = L.graded ? Math.round(L.first / L.graded * 100) : 100;
   const nx = FLAT[L.f.i + 1];
-  $("#l-body").innerHTML = `<div class="l-wrap"><div class="done-screen"><div class="trophy">${pip("cheer", 150)}</div><h2>${L.replay ? t("practice_complete") : t("lesson_complete")}</h2><p>${esc(L.lesson.title)}${nx && !L.replay ? ` · ${t("next_up", { t: esc(nx.lesson.title) })}` : ""}</p>
+  $("#l-body").innerHTML = `<div class="l-wrap"><div class="done-screen"><div class="trophy">${mascot("cheer", 150)}</div><h2>${L.replay ? t("practice_complete") : t("lesson_complete")}</h2><p>${esc(L.lesson.title)}${nx && !L.replay ? ` · ${t("next_up", { t: esc(nx.lesson.title) })}` : ""}</p>
     <div class="done-stats"><div class="xp"><small>${t("xp_earned")}</small><b>${ico("bolt","fill")}+${L.xp}</b></div><div class="acc"><small>${t("first_try")}</small><b>${acc}%</b></div><div class="st"><small>${t("streak")}</small><b>${ico("flame","fill")}${currentStreak()}</b></div></div></div></div>`;
   foot(`<span class="grow"></span><button class="btn btn-primary" id="go">${nx ? t("back_to_path") : t("finish")}</button>`);
   $("#go").onclick = () => (location.hash = "#/learn");
@@ -621,17 +714,68 @@ function renderFinish() {
   confetti(); openNode = null;
 }
 
+/* ============================================================ review: hub, sessions */
+const reviewDueText = n => tn("review_due", n);
+
+function reviewCard() {
+  const st = reviewStats();
+  if (!st.total) return "";
+  return `<div class="card revcard"><h3>${t("nav_review")}</h3><div class="revrow"><div><b>${st.due ? reviewDueText(st.due) : t("review_none")}</b><span>${t("review_stats", { mastered: st.mastered, learning: st.learning })}</span></div>
+    <a class="btn ${st.due ? "btn-primary" : "btn-ghost"} btn-sm" href="#/review${st.due ? "/start" : ""}">${st.due ? t("review_start") : t("nav_review")}</a></div></div>`;
+}
+
+function renderReviewHub() {
+  document.title = t("nav_review") + " · Codestep";
+  const st = reviewStats(), today = dayKey(), up = Srs.upcoming(validReviews(), today, 7);
+  const max = Math.max(1, ...up);
+  const dayName = n => (n === 0 ? t("review_today_short") : new Date(Date.now() + n * 864e5).toLocaleDateString(I18N.lang, { weekday: "short" }));
+  const head = `<div class="topbar"><h1>${t("review_title")}</h1>${stats()}</div>`;
+  if (!st.total) {
+    view.innerHTML = `${head}<div class="review"><div class="empty-card">${mascot("think", 100)}<h2>${t("review_title")}</h2><p>${t("review_empty")}</p><a class="btn btn-primary" href="#/learn">${t("back_to_path")}</a></div></div>`;
+    return;
+  }
+  const pct = Math.round(st.mastered / st.total * 100);
+  view.innerHTML = `${head}<div class="review">
+    <div class="card rev-hero">${mascot(st.due ? "happy" : "cheer", 110)}<div><h2>${st.due ? reviewDueText(st.due) : t("review_none")}</h2><p>${t("review_hint")}</p>
+      <div class="btns">${st.due ? `<a class="btn btn-primary" href="#/review/start">${t("review_start")}</a>` : ""}<a class="btn btn-ghost" href="#/review/weak">${t("review_practice")}</a></div></div></div>
+    <div class="rev-grid"><div class="card"><h3>${t("review_mastered")} / ${t("review_learning")}</h3><div class="lvl-top"><b>${st.mastered}</b><span>${st.learning}</span></div><div class="lvl-bar"><i style="width:${pct}%"></i></div><p class="fine">${t("review_stats", { mastered: st.mastered, learning: st.learning })}</p></div>
+    <div class="card"><h3>${t("review_upcoming")}</h3><div class="bars">${up.map((n, k) => `<div><i style="height:${Math.max(6, n / max * 100)}%" class="${k === 0 ? "now" : ""}" title="${n}"></i><small>${dayName(k)}</small><b>${n}</b></div>`).join("")}</div></div></div></div>`;
+}
+
+function openReview(mode) {
+  const valid = validReviews(), opts = { kindOf };
+  const keys = mode === "weak" ? Srs.weak(valid, opts) : Srs.pick(valid, dayKey(), opts);
+  if (!keys.length) { location.hash = "#/review"; return; }
+  const steps = keys.map(k => ({ ...STEP_BY_KEY[k].step, _key: k, _title: STEP_BY_KEY[k].lesson.title }));
+  L = { f: null, lesson: { id: "review", title: t("review_title"), steps }, i: 0, replay: true, review: { count: keys.length }, xp: 0, graded: 0, first: 0, token: 0 };
+  mountLesson();
+}
+
+function renderReviewFinish() {
+  award(0);                                                      // practising counts for today's streak
+  $(".l-progress", lroot).innerHTML = L.lesson.steps.map(() => `<i class="done"></i>`).join("");
+  const acc = L.graded ? Math.round(L.first / L.graded * 100) : 100, st = reviewStats();
+  const soon = Object.values(validReviews()).map(it => it.due).sort()[0], gap = soon ? Srs.daysBetween(dayKey(), soon) : null;
+  const when = gap === null ? "" : gap <= 0 ? t("review_today") : gap === 1 ? t("review_tomorrow") : t("review_in_days", { n: gap });
+  $("#l-body").innerHTML = `<div class="l-wrap"><div class="done-screen"><div class="trophy">${mascot("cheer", 150)}</div><h2>${t("review_done_title")}</h2>${when ? `<p>${t("review_next", { when })}</p>` : ""}
+    <div class="done-stats"><div class="xp"><small>${t("review_reviewed")}</small><b>${L.review.count}</b></div><div class="acc"><small>${t("review_accuracy")}</small><b>${acc}%</b></div><div class="st"><small>${t("streak")}</small><b>${ico("flame", "fill")}${currentStreak()}</b></div></div></div></div>`;
+  foot(`<span class="grow"></span><button class="btn btn-primary" id="go">${t("back_to_path")}</button>`);
+  $("#go").onclick = () => (location.hash = "#/learn");
+  confetti(); updateDueBadge();
+}
+
 /* ============================================================ router */
-const routes = {};   // extra pages registered by account.js: name -> fn(arg)
+const routes = { review: renderReviewHub };   // pages by name; account.js adds auth, settings and leaderboard
 function route() {
   const [, r, arg] = (location.hash || "#/learn").split("/");
   if (r === "lesson") { if (!L || L.lesson.id !== arg) { closeLesson(); openLesson(arg); } return; }
+  if (r === "review" && arg) { if (!L || !L.review) { closeLesson(); openReview(arg === "weak" ? "weak" : "due"); } return; }
   if (L) closeLesson();
   $$("[data-route]").forEach(a => a.classList.toggle("active", a.dataset.route === (r || "learn")));
   if (routes[r]) { routes[r](arg); return; }
-  if (r === "playground") { document.title = t("playground") + " · Pythonic"; renderPlayground(); }
+  if (r === "playground") { document.title = t("playground") + " · Codestep"; renderPlayground(); }
   else {
-    document.title = "Pythonic: Learn Python by Doing"; renderLearn();
+    document.title = "Codestep: Learn Python by Doing"; renderLearn();
     requestAnimationFrame(() => {
       const cur = $(".node.current", view); if (!cur) return;
       const r = cur.getBoundingClientRect();
@@ -644,10 +788,11 @@ $("#btn-theme").onclick = () => { S.theme = document.documentElement.dataset.the
 $("#btn-settings").onclick = () => (location.hash = "#/settings");
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && $("#modal-root").firstChild) { $("#modal-root").innerHTML = ""; return; }
-  if (!L || $("#modal-root").firstChild) return;
+  if (!L || $("#modal-root").firstChild || document.body.classList.contains("viz-open")) return;
   const t = e.target;
   if (t.closest && t.closest(".CodeMirror")) return;              // the editor handles its own shortcuts
-  if (/INPUT|SELECT|TEXTAREA/.test(t.tagName)) return;
+  if (t.tagName === "TEXTAREA") return;                           // exercise inputs handle their own shortcuts
+  if (/INPUT|SELECT/.test(t.tagName)) return;
   const primary = () => $("#l-foot .btn-primary:not(:disabled), #l-foot .btn-good, #l-foot .btn-bad:not(.btn-sm)");
   const opts = $$(".opt").filter(o => !o.disabled);
   const mod = e.metaKey || e.ctrlKey;
@@ -682,10 +827,10 @@ function setLanguage(l, silent) {
 }
 I18N.setLang(S.lang || I18N.detect());
 offRuntime && offRuntime(); offRuntime = paintRuntime();
-applyTheme(); route();
+applyTheme(); seedReviews(); route(); updateDueBadge();
 window.App = {
-  get S() { return S; }, get signedIn() { return signedIn; }, save, view, modal, toast, t, tn, esc, ico, pip, MOD, $, $$, hooks, routes,
-  applyTheme, setLanguage, applyServerProgress, enterAccount, leaveAccount, clearGuestProgress, guestDoneLessons,
+  get S() { return S; }, get signedIn() { return signedIn; }, Py, save, view, modal, toast, t, tn, esc, ico, mascot, MOD, $, $$, hooks, routes,
+  applyTheme, setLanguage, applyServerProgress, seedReviews, updateDueBadge, enterAccount, leaveAccount, clearGuestProgress, guestDoneLessons,
   refresh: route, setGoal: n => { S.goal = n; save(); },
 };
 })();

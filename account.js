@@ -1,7 +1,7 @@
 /* Accounts: auth screens, session lifecycle, progress sync, settings page and leaderboard.
    Everything talks to window.Backend (Supabase in production, a local mock in development). */
 (() => {
-const { t, tn, esc, ico, pip, view, modal, toast, $, $$, MOD } = App;
+const { t, tn, esc, ico, mascot, view, modal, toast, $, $$, MOD } = App;
 const B = window.Backend;
 const enabled = B && B.mode !== "none";
 
@@ -21,11 +21,13 @@ const PRESETS = [
 ];
 function presetSvg(n) {
   const p = PRESETS[(n - 1) % 8] || PRESETS[0], ink = "#0b1b3a";
-  return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="${p.bg}"/><ellipse cx="50" cy="56" rx="34" ry="31" fill="${p.body}" stroke="${ink}" stroke-width="4"/>
-    <ellipse cx="36" cy="38" rx="11" ry="4.5" fill="#fff" opacity=".5" transform="rotate(-24 36 38)"/>
-    <ellipse cx="37" cy="54" rx="8.5" ry="9.5" fill="#fff" stroke="${ink}" stroke-width="3"/><ellipse cx="63" cy="54" rx="8.5" ry="9.5" fill="#fff" stroke="${ink}" stroke-width="3"/>
-    <circle cx="38" cy="55.5" r="4.4" fill="${ink}"/><circle cx="64" cy="55.5" r="4.4" fill="${ink}"/>
-    <path d="M40 72 Q50 81 60 72" fill="none" stroke="${ink}" stroke-width="3.4" stroke-linecap="round"/></svg>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="${p.bg}"/>
+    <path d="M38 34 Q35 20 26 18 M62 34 Q65 20 74 18" fill="none" stroke="${ink}" stroke-width="3.4" stroke-linecap="round"/><circle cx="25" cy="18" r="4.6" fill="#2f6bff" stroke="${ink}" stroke-width="2.6"/><circle cx="75" cy="18" r="4.6" fill="#2f6bff" stroke="${ink}" stroke-width="2.6"/>
+    <path d="M16 66 C16 42 32 30 50 30 C68 30 84 42 84 66 C84 88 70 98 50 98 C30 98 16 88 16 66Z" fill="${p.body}" stroke="${ink}" stroke-width="4"/>
+    <ellipse cx="36" cy="43" rx="9" ry="3.6" fill="#fff" opacity=".5" transform="rotate(-26 36 43)"/>
+    <ellipse cx="36" cy="64" rx="8.5" ry="9.5" fill="#fff" stroke="${ink}" stroke-width="3"/><ellipse cx="64" cy="64" rx="8.5" ry="9.5" fill="#fff" stroke="${ink}" stroke-width="3"/>
+    <circle cx="37" cy="65.5" r="4.4" fill="${ink}"/><circle cx="65" cy="65.5" r="4.4" fill="${ink}"/>
+    <path d="M40 82 Q50 90 60 82" fill="none" stroke="${ink}" stroke-width="3.4" stroke-linecap="round"/></svg>`;
 }
 function avatar(p, size = 40) {
   const url = p && p.avatar === "upload" ? B.avatarUrl(p) : null;
@@ -36,7 +38,7 @@ function avatar(p, size = 40) {
 
 /* ------------------------------------------------------------ session lifecycle */
 let loading = false, queue = [], flushing = false, retryTimer = null;
-const qKey = () => "pythonic:pending:" + (Account.user ? Account.user.id : "");
+const qKey = () => "codestep:pending:" + (Account.user ? Account.user.id : "");
 function loadQueue() { try { queue = JSON.parse(localStorage.getItem(qKey()) || "[]"); } catch { queue = []; } }
 function saveQueue() { try { localStorage.setItem(qKey(), JSON.stringify(queue)); } catch {} }
 
@@ -45,15 +47,18 @@ async function flush() {
   flushing = true;
   try {
     while (queue.length) {
-      const it = queue[0], r = await B.recordStep(it.key, it.xp);
+      const it = queue[0], r = it.kind === "review" ? await B.recordReview(it.key, it.quality, it.item) : await B.recordStep(it.key, it.xp);
       if (r.error && ["err_network", "err_rate"].includes(r.error.key)) { clearTimeout(retryTimer); retryTimer = setTimeout(flush, r.error.key === "err_rate" ? 20000 : 15000); break; }
-      if (!r.error) App.applyServerProgress(r.data);
+      if (!r.error && it.kind !== "review") App.applyServerProgress(r.data);
       queue.shift(); saveQueue();
       if (hasRoute("learn") || location.hash === "" || location.hash === "#/") App.refresh();
     }
   } finally { flushing = false; }
 }
-App.hooks.step = (key, xp) => { if (Account.phase !== "ready") return; queue.push({ key, xp }); saveQueue(); flush(); };
+const enqueue = job => { if (Account.phase !== "ready") return; queue.push(job); saveQueue(); flush(); };
+App.hooks.step = (key, xp) => enqueue({ kind: "step", key, xp });
+App.hooks.review = (key, quality, item) => enqueue({ kind: "review", key, quality, item });
+App.hooks.seed = items => { if (Account.phase === "ready") B.seedReviews(items); };
 addEventListener("online", flush);
 
 function applyProfilePrefs(p) {
@@ -77,8 +82,9 @@ async function loadAccount() {
       if (!r.error) { App.clearGuestProgress(); prog = r.data; toast(t("imported")); }
     }
     if (!prog) { const r = await B.getProgress(); prog = r.error ? { xp: 0, streak: 0, daily: {}, done: [], today_xp: 0 } : r.data; }
-    App.applyServerProgress(prog);
+    App.applyServerProgress(prog, true);
     Account.phase = "ready";
+    App.seedReviews();
     applyProfilePrefs(Account.profile);
     paintChip(); flush();
     if (hasRoute("auth")) go("#/learn"); else App.refresh();
@@ -126,7 +132,7 @@ function paintChip() {
 }
 
 /* ------------------------------------------------------------ password + username checks */
-const COMMON = new Set(["password", "password1", "password12", "password123", "passw0rd123", "1234567890", "12345678910", "0123456789", "qwertyuiop", "qwerty12345", "qwertyuiop1", "asdfghjkl1", "iloveyou123", "letmein123", "welcome123", "welcome1234", "admin12345", "abc1234567", "1q2w3e4r5t", "football123", "monkey1234", "dragon1234", "sunshine123", "princess123", "baseball123", "superman123", "changeme123", "trustno1234", "pythonpython", "python1234", "python12345", "pythonic123"]);
+const COMMON = new Set(["password", "password1", "password12", "password123", "passw0rd123", "1234567890", "12345678910", "0123456789", "qwertyuiop", "qwerty12345", "qwertyuiop1", "asdfghjkl1", "iloveyou123", "letmein123", "welcome123", "welcome1234", "admin12345", "abc1234567", "1q2w3e4r5t", "football123", "monkey1234", "dragon1234", "sunshine123", "princess123", "baseball123", "superman123", "changeme123", "trustno1234", "pythonpython", "python1234", "python12345", "codestep123"]);
 function checkPassword(pw, { email = "", username = "" } = {}) {
   const issues = [], low = pw.toLowerCase(), local = email.split("@")[0].toLowerCase();
   if (pw.length < 10) issues.push("pw_too_short");
@@ -173,8 +179,8 @@ function bindPwToggles(root) {
 }
 
 function renderAuth(mode = "signin") {
-  document.title = t("sign_in") + " · Pythonic";
-  if (!enabled) { view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${pip("think", 90)}<h1>${t("not_configured")}</h1><a class="btn btn-primary" href="#/learn">${t("back_to_path")}</a></div></div>`; return; }
+  document.title = t("sign_in") + " · Codestep";
+  if (!enabled) { view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${mascot("think", 90)}<h1>${t("not_configured")}</h1><a class="btn btn-primary" href="#/learn">${t("back_to_path")}</a></div></div>`; return; }
   if (Account.phase === "ready" && mode !== "recovery") { go("#/settings"); return; }
   if (Account.phase === "recovery") mode = "recovery";
   const demo = B.demo ? `<div class="banner demo">${t("demo_banner")}</div>` : "";
@@ -200,7 +206,7 @@ function renderAuth(mode = "signin") {
   else if (mode === "confirm") body = `<h1>${t("check_inbox")}</h1><p class="sub">${t("check_inbox_text", { email: `<b>${esc(authNotice || "")}</b>` })}</p>
     <button class="btn btn-ghost btn-block" id="resend">${t("resend")}</button><div class="err good" id="err" role="status"></div><div class="links"><a href="#/auth/signin">${t("sign_in")}</a></div>`;
 
-  view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${demo}<div class="auth-pip">${pip(mode === "confirm" ? "cheer" : "happy", 84)}</div>${body}</div></div>`;
+  view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${demo}<div class="auth-mascot">${mascot(mode === "confirm" ? "cheer" : "happy", 84)}</div>${body}</div></div>`;
   const root = view, err = $("#err", root), f = $("#f", root), btn = $("#go", root);
   const showErr = m => { if (err) { err.textContent = m || ""; err.className = "err" + (m ? " show" : ""); } };
   const busy = on => { if (btn) { btn.disabled = on; btn.classList.toggle("loading", on); } };
@@ -275,7 +281,7 @@ const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(v) === String
 function timezones() { try { return Intl.supportedValuesOf("timeZone"); } catch { return ["UTC", "Europe/Stockholm", "Europe/London", "America/New_York", "America/Los_Angeles", "Asia/Tokyo"]; } }
 
 async function renderSettings() {
-  document.title = t("settings_title") + " · Pythonic";
+  document.title = t("settings_title") + " · Codestep";
   const S = App.S, ready = Account.phase === "ready" && Account.profile, p = Account.profile || {};
   const themeCur = ready ? (p.theme || "system") : (S.theme || "system");
   const langCur = ready ? p.language : I18N.lang;
@@ -283,7 +289,7 @@ async function renderSettings() {
   const tzNow = (ready && p.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const tzs = timezones(); if (!tzs.includes(tzNow)) tzs.unshift(tzNow);
 
-  const guestBanner = !ready && enabled ? `<div class="set-card banner-card">${pip("happy", 70)}<div><h3>${t("guest_banner_title")}</h3><p>${t("guest_banner_text")}</p><div class="btns"><a class="btn btn-primary btn-sm" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost btn-sm" href="#/auth/signin">${t("sign_in")}</a></div></div></div>` : "";
+  const guestBanner = !ready && enabled ? `<div class="set-card banner-card">${mascot("happy", 70)}<div><h3>${t("guest_banner_title")}</h3><p>${t("guest_banner_text")}</p><div class="btns"><a class="btn btn-primary btn-sm" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost btn-sm" href="#/auth/signin">${t("sign_in")}</a></div></div></div>` : "";
   const prefs = `<section class="set-card"><h3>${t("sec_prefs")}</h3>
     ${row(t("language"), t("language_note"), `<select class="select" id="s-lang">${I18N.LANGS.map(l => opt(l, I18N.NAMES[l], langCur)).join("")}</select>`)}
     ${row(t("theme"), "", `<div class="seg" id="s-theme">${["system", "light", "dark"].map(v => `<button data-v="${v}" class="${v === themeCur ? "on" : ""}">${t("theme_" + v)}</button>`).join("")}</div>`)}
@@ -370,7 +376,7 @@ async function renderSettings() {
   $("#exp", root).onclick = async () => {
     const r = await B.exportData(); if (r.error) return toast(errText(r.error));
     const url = URL.createObjectURL(new Blob([JSON.stringify(r.data, null, 2)], { type: "application/json" }));
-    const a = document.createElement("a"); a.href = url; a.download = "pythonic-data.json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const a = document.createElement("a"); a.href = url; a.download = "codestep-data.json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
   $("#del", root).onclick = () => {
     const close = modal({ title: t("delete_confirm_title"), text: t("delete_confirm_text", { u: p.username }), keep: true, html: `<div class="field"><input class="input" id="dc" autocomplete="off" spellcheck="false"></div>`,
@@ -399,10 +405,10 @@ function resetsIn() {
   return days ? `${days}d ${h}h` : `${h}h ${m}m`;
 }
 async function renderLeaderboard() {
-  document.title = t("lb_title") + " · Pythonic";
+  document.title = t("lb_title") + " · Codestep";
   const head = `<div class="topbar"><h1>${t("lb_title")}</h1></div>`;
   if (!enabled || Account.phase !== "ready") {
-    view.innerHTML = `${head}<div class="lb-wrap"><div class="empty-card">${pip("think", 96)}<h2>${t("lb_signin_title")}</h2><p>${enabled ? t("lb_signin_text") : t("not_configured")}</p>${enabled ? `<div class="btns"><a class="btn btn-primary" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost" href="#/auth/signin">${t("sign_in")}</a></div>` : ""}</div></div>`;
+    view.innerHTML = `${head}<div class="lb-wrap"><div class="empty-card">${mascot("think", 96)}<h2>${t("lb_signin_title")}</h2><p>${enabled ? t("lb_signin_text") : t("not_configured")}</p>${enabled ? `<div class="btns"><a class="btn btn-primary" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost" href="#/auth/signin">${t("sign_in")}</a></div>` : ""}</div></div>`;
     return;
   }
   view.innerHTML = `${head}<div class="lb-wrap"><div class="lb-head"><div class="seg" id="lb-tabs">${[["week", "lb_week"], ["all", "lb_all"]].map(([v, k]) => `<button data-v="${v}" class="${v === lbPeriod ? "on" : ""}">${t(k)}</button>`).join("")}</div><span class="chip" id="lb-reset">${lbPeriod === "week" ? t("lb_resets", { t: resetsIn() }) : ""}</span></div><div id="lb-body"><div class="lb-skel">${"<i></i>".repeat(6)}</div></div></div>`;
@@ -412,7 +418,7 @@ async function renderLeaderboard() {
   const body = $("#lb-body", view); if (!body) return;
   if (r.error) { body.innerHTML = `<div class="empty-card"><p>${t("lb_error")}</p><button class="btn btn-ghost btn-sm" id="lb-retry">${t("retry")}</button></div>`; $("#lb-retry").onclick = renderLeaderboard; return; }
   const rows = r.data || [];
-  if (!rows.length) { body.innerHTML = `<div class="empty-card">${pip("cheer", 90)}<p>${t("lb_empty")}</p></div>`; return; }
+  if (!rows.length) { body.innerHTML = `<div class="empty-card">${mascot("cheer", 90)}<p>${t("lb_empty")}</p></div>`; return; }
   const medal = n => n <= 3 ? `<span class="rk m${n}">${n}</span>` : `<span class="rk">${n}</span>`;
   const meHidden = Account.profile && !Account.profile.show_on_leaderboard;
   body.innerHTML = `<ol class="lb-list">${rows.map((x, i) => `${i > 0 && x.rank - rows[i - 1].rank > 1 && x.is_me ? `<li class="lb-gap">⋯</li>` : ""}<li class="lb-row ${x.is_me ? "me" : ""} ${x.rank <= 3 ? "top" : ""}">${medal(x.rank)}${avatar({ avatar: x.avatar, avatar_version: x.avatar_version, user_id: x.user_id }, 42)}<span class="nm">${esc(x.username)}${x.is_me ? ` <em>${t("lb_you")}</em>` : ""}</span><span class="xp">${x.xp.toLocaleString()} <small>${t("xp")}</small></span></li>`).join("")}</ol>${meHidden ? `<p class="fine">${t("lb_hidden")}</p>` : ""}`;

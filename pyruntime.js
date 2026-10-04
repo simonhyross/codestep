@@ -110,6 +110,133 @@ def run_code(code, tests=None, profile=False):
                 sys.stdout, sys.stderr = real
     return json.dumps(res)
 
+# ---------------------------------------------------------------- tracing (code visualizer)
+class _StopTrace(BaseException):
+    pass
+
+_MAX_ITEMS = 24
+
+def trace_code(code, max_steps=1000):
+    """Run code and record the program state before every line: call stack, variables and objects."""
+    try:
+        compiled = compile(code, "<main>", "exec")
+    except BaseException as e:
+        return json.dumps({"steps": [], "out": "", "error": _format_exc(e), "truncated": False})
+
+    ids, keep, by_num, steps = {}, [], {}, []
+    out = io.StringIO()
+    state = {"truncated": False, "exc": False}
+    ns = {"__name__": "__main__", "input": _input}
+
+    def oid(o):
+        k = id(o)
+        if k not in ids:
+            ids[k] = len(ids) + 1
+            by_num[ids[k]] = o
+            keep.append(o)          # keep alive so ids are never reused
+        return ids[k]
+
+    def enc(v):
+        t = type(v)
+        if v is None or t in (bool, int, float, complex):
+            r = repr(v)
+            return {"p": r if len(r) <= 24 else r[:21] + "..."}
+        if t is str:
+            return {"p": repr(v if len(v) <= 40 else v[:37] + "...")}
+        return {"r": oid(v)}
+
+    def describe(v):
+        t = type(v)
+        if t in (list, tuple, set, frozenset):
+            items = list(v) if t in (list, tuple) else list(v)[:_MAX_ITEMS + 1]
+            return {"k": t.__name__, "i": [enc(x) for x in items[:_MAX_ITEMS]], "m": max(0, len(v) - _MAX_ITEMS)}
+        if t is dict:
+            pairs = list(v.items())
+            return {"k": "dict", "i": [[enc(a), enc(b)] for a, b in pairs[:_MAX_ITEMS]], "m": max(0, len(pairs) - _MAX_ITEMS)}
+        if isinstance(v, types.FunctionType):
+            return {"k": "func", "n": v.__name__}
+        if isinstance(v, type):
+            return {"k": "class", "n": v.__name__}
+        d = getattr(v, "__dict__", None) if not isinstance(v, types.ModuleType) else None
+        if isinstance(d, dict) and t.__module__ == "__main__":
+            return {"k": "obj", "n": t.__name__, "i": [[a, enc(b)] for a, b in list(d.items())[:_MAX_ITEMS]], "m": 0}
+        return {"k": "other", "n": t.__name__}
+
+    def frame_vars(frame, is_module):
+        src = ns if is_module else frame.f_locals
+        res = []
+        for name, val in list(src.items()):
+            if name.startswith("__") or isinstance(val, types.ModuleType) or name in ("input",) and is_module:
+                continue
+            res.append([name, enc(val)])
+        return res
+
+    def snapshot(frame, ev, extra=None):
+        stack, f = [], frame
+        while f is not None:
+            if f.f_code.co_filename == "<main>":
+                mod = f.f_code.co_name == "<module>"
+                stack.append({"n": "Global frame" if mod else f.f_code.co_name, "l": f.f_lineno, "v": frame_vars(f, mod)})
+            f = f.f_back
+        stack.reverse()
+        heap, queue, seen = {}, [], set()
+        for fr in stack:
+            queue.extend(e["r"] for _, e in fr["v"] if "r" in e)
+        if extra and "r" in extra.get("ret", {}):
+            queue.append(extra["ret"]["r"])
+        while queue and len(heap) < 60:
+            n = queue.pop(0)
+            if n in seen:
+                continue
+            seen.add(n)
+            d = describe(by_num[n])
+            heap[n] = d
+            for it in d.get("i", []):
+                for e in (it if isinstance(it, list) else [it]):
+                    if isinstance(e, dict) and "r" in e:
+                        queue.append(e["r"])
+        step = {"ln": frame.f_lineno, "ev": ev, "s": stack, "h": heap, "o": out.tell()}
+        if extra:
+            step.update(extra)
+        steps.append(step)
+        if len(steps) >= max_steps:
+            state["truncated"] = True
+            raise _StopTrace()
+
+    def tracer(frame, event, arg):
+        if frame.f_code.co_filename != "<main>":
+            return None
+        if event == "call":
+            return tracer
+        if state["exc"]:            # the error is already recorded; ignore the stack unwinding
+            return tracer
+        if event == "line":
+            snapshot(frame, "line")
+        elif event == "return":
+            if frame.f_code.co_name == "<module>":
+                snapshot(frame, "end")
+            else:
+                snapshot(frame, "return", {"ret": enc(arg)})
+        elif event == "exception" and not state["exc"]:
+            state["exc"] = True
+            snapshot(frame, "exception", {"exc": type(arg[1]).__name__ + ": " + str(arg[1])[:120]})
+        return tracer
+
+    real = (sys.stdout, sys.stderr)
+    sys.stdout = sys.stderr = out
+    err = None
+    sys.settrace(tracer)
+    try:
+        exec(compiled, ns)
+    except _StopTrace:
+        pass
+    except BaseException as e:
+        err = _format_exc(e)
+    finally:
+        sys.settrace(None)
+        sys.stdout, sys.stderr = real
+    return json.dumps({"steps": steps, "out": out.getvalue(), "error": err, "truncated": state["truncated"]})
+
 # ---------------------------------------------------------------- linting
 _BUILTINS = set(dir(builtins))
 _SHADOW = {"list", "dict", "set", "str", "int", "float", "bool", "tuple", "sum", "max", "min",

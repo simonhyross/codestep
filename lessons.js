@@ -10,10 +10,10 @@ window.UNITS = [
   { id: "hello", title: "Hello, Python", blurb: "Print text and store values", steps: [
     { type: "learn", title: "Your first program", html: py`
       <p>A program is a list of instructions. The most famous first instruction is <code>print()</code>, which shows something on screen.</p>
-      <pre><code>print("Hello, world!")</code></pre>
+      <pre data-run><code>print("Hello, world!")</code></pre>
       <p>Text goes inside quotes and is called a <b>string</b>. Numbers don't need quotes.</p>
       <p>A <b>variable</b> is a name that holds a value:</p>
-      <pre><code>language = "Python"
+      <pre data-run><code>language = "Python"
 year = 1991
 print(language, year)</code></pre>` },
     { type: "code", prompt: py`<p>Print exactly <code>Hello, world!</code></p>`,
@@ -38,7 +38,7 @@ assert output.strip() == "30", "Print the variable age"` },
 7 % 2    # 1      remainder
 2 ** 10  # 1024   power</code></pre>
       <p><b>f-strings</b> put values inside text. Start the string with <code>f</code> and wrap names in braces:</p>
-      <pre><code>name = "Ada"
+      <pre data-run><code>name = "Ada"
 print(f"Hi {name}, 2+2 is {2 + 2}")</code></pre>` },
     { type: "quiz", q: "What is the value of this expression?", code: "7 // 2",
       options: ["3", "3.5", "4", "1"], answer: 0, why: [null, "That's what / gives. // is floor division and drops the decimals.", "// rounds down, never up: 3.5 becomes 3, not 4.", "That's the remainder (7 % 2). // gives the whole-number quotient."], explain: "// is floor division. It drops the decimal part: 3.5 becomes 3." },
@@ -58,11 +58,16 @@ print(f"{name} is {age} years old")`, hint: 'print(f"{name} is ... years old") a
       tests: py`for n, a in [("Ada", 36), ("Grace", 45)]:
     r = run_with(name=n, age=a)
     assert r.out.strip() == f"{n} is {a} years old", "Use the variables inside an f-string, don't hardcode the text"` },
+    { type: "predict", code: py`a = 17
+print(a // 5, a % 5)
+print(a ** 2)`,
+      answer: py`3 2
+289` },
   ]},
   { id: "decisions", title: "Decisions", blurb: "if, elif and else", steps: [
     { type: "learn", title: "Making choices", html: py`
       <p>Programs choose between paths with <code>if</code>. Indentation (4 spaces) shows which lines belong to which branch.</p>
-      <pre><code>temp = 22
+      <pre data-run><code>temp = 22
 if temp > 30:
     print("hot")
 elif temp >= 15:
@@ -101,17 +106,25 @@ else:
       tests: py`def grade(s): return "A" if s >= 90 else "B" if s >= 80 else "C" if s >= 70 else "F"
 for s in (95, 90, 85, 80, 72, 70, 40):
     assert run_with(score=s).out.strip() == grade(s), f"Wrong grade for score = {s}"` },
+    { type: "predict", code: py`x = 7
+if x % 2 == 0:
+    print("even")
+elif x > 5:
+    print("big odd")
+else:
+    print("small odd")`,
+      answer: py`big odd` },
   ]},
   { id: "loops", title: "Loops", blurb: "Repeat things with for and while", steps: [
     { type: "learn", title: "Doing things again", html: py`
       <p>A <code>for</code> loop repeats a block for every item in a sequence. <code>range(n)</code> gives 0 to n-1.</p>
-      <pre><code>for i in range(3):
+      <pre data-run><code>for i in range(3):
     print(i)        # 0 1 2
 
 for i in range(2, 10, 3):   # start, stop, step
     print(i)</code></pre>
       <p>A <code>while</code> loop repeats as long as a condition is true. Use <code>break</code> to leave early.</p>
-      <pre><code>n = 1
+      <pre data-run><code>n = 1
 while n < 100:
     n *= 2</code></pre>` },
     { type: "quiz", q: "Which numbers does this produce?", code: "list(range(2, 10, 3))",
@@ -139,6 +152,13 @@ for i in range(1, n + 1):
         print(i)`, hint: "Check the 'both' case (i % 15 == 0) first.",
       tests: py`want = ["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]
 assert output.split() == want, "Output doesn't match FizzBuzz for 1..15"` },
+    { type: "predict", code: py`total = 0
+for n in range(1, 4):
+    total += n
+    print(total)`,
+      answer: py`1
+3
+6` },
   ]},
   ]
 },
@@ -148,7 +168,7 @@ assert output.split() == want, "Output doesn't match FizzBuzz for 1..15"` },
   { id: "functions", title: "Functions", blurb: "Package code for reuse", steps: [
     { type: "learn", title: "Define once, use often", html: py`
       <p>A function is a named, reusable block. It takes <b>parameters</b> and sends a value back with <code>return</code>.</p>
-      <pre><code>def area(width, height=1):
+      <pre data-run><code>def area(width, height=1):
     return width * height
 
 print(area(3, 4))   # 12
@@ -186,10 +206,17 @@ assert greet("Ada", "Hi") == "Hi, Ada!"` },
 assert clamp(-5, 0, 10) == 0
 assert clamp(50, 0, 10) == 10
 assert clamp(10, 0, 10) == 10` },
+    { type: "predict", code: py`def shout(word, times=2):
+    return (word + "!") * times
+
+print(shout("hi"))
+print(shout("ok", 1))`,
+      answer: py`hi!hi!
+ok!` },
   ]},
   { id: "lists", title: "Lists", blurb: "Ordered collections", steps: [
     { type: "learn", title: "Lists hold many values", html: py`
-      <pre><code>nums = [10, 20, 30, 40]
+      <pre data-run><code>nums = [10, 20, 30, 40]
 nums[0]        # 10   (first)
 nums[-1]       # 40   (last)
 nums[1:3]      # [20, 30]  slice, stop excluded
@@ -224,11 +251,18 @@ assert rotate_left(a) == [2, 3, 1]
 assert a == [1, 2, 3], "Don't change the original list"
 assert rotate_left([]) == []
 assert rotate_left([9]) == [9]` },
+    { type: "predict", code: py`a = [1, 2, 3]
+b = a
+b.append(4)
+print(a)
+print(len(b))`,
+      answer: py`[1, 2, 3, 4]
+4` },
   ]},
   { id: "dicts", title: "Dicts & Sets", blurb: "Look things up by key", steps: [
     { type: "learn", title: "Key → value", html: py`
       <p>A <b>dict</b> maps keys to values. Lookup by key is very fast.</p>
-      <pre><code>ages = {"Ada": 36, "Linus": 54}
+      <pre data-run><code>ages = {"Ada": 36, "Linus": 54}
 ages["Ada"]              # 36
 ages["Grace"] = 45       # add
 ages.get("Bob", 0)       # 0  (default if missing)
@@ -255,11 +289,16 @@ assert word_count("") == {}` },
       tests: py`assert unique_sorted([3, 1, 3, 2, 1]) == [1, 2, 3]
 assert unique_sorted([]) == []
 assert unique_sorted(["b", "a", "b"]) == ["a", "b"]` },
+    { type: "predict", code: py`stock = {"apples": 3}
+stock["pears"] = stock.get("pears", 0) + 2
+stock["apples"] += 1
+print(stock)`,
+      answer: py`{'apples': 4, 'pears': 2}` },
   ]},
   { id: "comprehensions", title: "Comprehensions", blurb: "Build collections in one line", steps: [
     { type: "learn", title: "Loops in one line", html: py`
       <p>A <b>comprehension</b> builds a list (or dict, set) from a loop, concisely:</p>
-      <pre><code>squares = [x * x for x in range(5)]       # [0, 1, 4, 9, 16]
+      <pre data-run><code>squares = [x * x for x in range(5)]       # [0, 1, 4, 9, 16]
 evens = [x for x in range(10) if x % 2 == 0]
 lengths = {w: len(w) for w in ["hi", "python"]}</code></pre>
       <p>Pattern: <code>[expression for item in iterable if condition]</code>.</p>` },
@@ -286,6 +325,9 @@ assert flatten([]) == []` },
     return {w: len(w) for w in words}`, hint: "{key: value for item in iterable}",
       tests: py`assert lengths(["hi", "python"]) == {"hi": 2, "python": 6}
 assert lengths([]) == {}` },
+    { type: "predict", code: py`words = ["tea", "coffee", "milk"]
+print([w.upper() for w in words if len(w) > 3])`,
+      answer: py`['COFFEE', 'MILK']` },
   ]},
   ]
 },
@@ -295,7 +337,7 @@ assert lengths([]) == {}` },
   { id: "stacks", title: "Stacks", blurb: "Last in, first out", steps: [
     { type: "learn", title: "Think of a stack of plates", html: py`
       <p>A <b>stack</b> is last-in, first-out (LIFO). You only touch the top. In Python a list works perfectly:</p>
-      <pre><code>stack = []
+      <pre data-run><code>stack = []
 stack.append("a")   # push
 stack.append("b")
 stack.pop()         # "b"  (pop from top)
@@ -340,12 +382,19 @@ assert is_balanced("a(b)c[d]") is True` },
 assert evaluate_rpn(["5", "1", "2", "+", "4", "*", "+", "3", "-"]) == 14
 assert evaluate_rpn(["7"]) == 7
 assert evaluate_rpn(["9", "3", "-"]) == 6` },
+    { type: "predict", code: py`stack = []
+for ch in "abc":
+    stack.append(ch)
+print(stack.pop())
+print(stack)`,
+      answer: py`c
+['a', 'b']` },
   ]},
   { id: "queues", title: "Queues", blurb: "First in, first out", steps: [
     { type: "learn", title: "Waiting in line", html: py`
       <p>A <b>queue</b> is first-in, first-out (FIFO). New items join the back; items leave from the front.</p>
       <p>Don't use <code>list.pop(0)</code>: it shifts every element, so it's <b>O(n)</b>. Use <code>collections.deque</code>, where both ends are <b>O(1)</b>:</p>
-      <pre><code>from collections import deque
+      <pre data-run><code>from collections import deque
 q = deque()
 q.append("a")      # enqueue
 q.append("b")
@@ -401,11 +450,19 @@ try:
     assert False, "dequeue on an empty queue should raise IndexError"
 except IndexError:
     pass` },
+    { type: "predict", code: py`from collections import deque
+
+q = deque([1, 2, 3])
+q.append(4)
+print(q.popleft(), q.popleft())
+print(list(q))`,
+      answer: py`1 2
+[3, 4]` },
   ]},
   { id: "linked", title: "Linked Lists", blurb: "Nodes pointing to nodes", steps: [
     { type: "learn", title: "A chain of nodes", html: py`
       <p>A <b>linked list</b> stores each value in a node that points to the next one. No contiguous memory is needed.</p>
-      <pre><code>class Node:
+      <pre data-run><code>class Node:
     def __init__(self, value, next=None):
         self.value = value
         self.next = next
@@ -479,7 +536,7 @@ assert reverse(None) is None` },
     { type: "learn", title: "Hashing in a nutshell", html: py`
       <p>A dict turns each key into a number with a <b>hash function</b>, and uses it to jump straight to the right slot. That's why lookup, insert and delete are <b>O(1)</b> on average.</p>
       <p>Keys must be <b>hashable</b> (immutable): strings, numbers and tuples work; lists and dicts don't.</p>
-      <pre><code>seen = {}
+      <pre data-run><code>seen = {}
 seen[(1, 2)] = "ok"       # tuple key: fine
 # seen[[1, 2]] = "no"     # TypeError: unhashable type</code></pre>
       <p>Whenever you catch yourself searching a list again and again, ask: <i>could a dict or set do this?</i></p>` },
@@ -510,6 +567,13 @@ assert first_unique("python") == "p"` },
       tests: py`got = group_anagrams(["eat", "tea", "tan", "ate", "nat", "bat"])
 assert got == [["eat", "tea", "ate"], ["tan", "nat"], ["bat"]], f"Got {got}"
 assert group_anagrams([]) == []` },
+    { type: "predict", code: py`seen = set()
+for x in [1, 2, 2, 3, 1]:
+    if x in seen:
+        print("dup", x)
+    seen.add(x)`,
+      answer: py`dup 2
+dup 1` },
   ]},
   { id: "trees", title: "Binary Trees", blurb: "Hierarchies and search trees", steps: [
     { type: "learn", title: "Trees branch", html: py`
@@ -629,11 +693,13 @@ assert Node(1).height() == 1` },
   { id: "linear", title: "Linear Search", blurb: "Check items one by one", steps: [
     { type: "learn", title: "The simplest search", html: py`
       <p><b>Linear search</b> checks each item until it finds the target. It works on any list, sorted or not.</p>
-      <pre><code>def contains(arr, target):
+      <pre data-run><code>def contains(arr, target):
     for x in arr:
         if x == target:
             return True
-    return False</code></pre>
+    return False
+
+print(contains([4, 2, 7], 7))</code></pre>
       <p>In the worst case (target missing) it checks all <i>n</i> items: <b>O(n)</b>.</p>` },
     { type: "quiz", q: "A list has 1000 items and the target is not in it. How many comparisons does linear search make?", options: ["1000", "10", "500", "1"], answer: 0, why: [null, "10 is far too few. Linear search can't skip items it hasn't looked at.", "~500 is the average when the item IS present. A missing item forces a full scan.", "1 is the best case (target first). Here the target isn't in the list at all."], explain: "It has to rule out every single item." },
     { type: "code", prompt: py`<p>Write <code>linear_search(arr, target)</code> returning the index of the first match, or <code>-1</code>.</p>`,
@@ -725,6 +791,17 @@ assert lower_bound([1, 3, 3, 5], 4) == 3
 assert lower_bound([1, 3, 3, 5], 0) == 0
 assert lower_bound([1, 3, 3, 5], 9) == 4
 assert lower_bound([], 1) == 0` },
+    { type: "predict", code: py`arr = [1, 3, 5, 7, 9]
+lo, hi = 0, len(arr) - 1
+while lo <= hi:
+    mid = (lo + hi) // 2
+    print(mid)
+    if arr[mid] < 7:
+        lo = mid + 1
+    else:
+        hi = mid - 1`,
+      answer: py`2
+3` },
   ]},
   { id: "sorting", title: "Sorting", blurb: "Bubble, selection and friends", steps: [
     { type: "learn", title: "Putting things in order", html: py`
@@ -769,6 +846,12 @@ assert selection_sort([1]) == [1]` },
 assert bubble_swaps([1, 2, 3]) == 0
 assert bubble_swaps([2, 1, 3, 0]) == 4
 assert bubble_swaps([]) == 0` },
+    { type: "predict", code: py`data = [3, 1, 2]
+for i in range(len(data) - 1):
+    if data[i] > data[i + 1]:
+        data[i], data[i + 1] = data[i + 1], data[i]
+print(data)`,
+      answer: py`[1, 2, 3]` },
   ]},
   { id: "merge", title: "Merge Sort", blurb: "Divide and conquer", steps: [
     { type: "learn", title: "Split, sort, merge", html: py`
@@ -845,7 +928,7 @@ assert merge_sort([]) == [] and merge_sort([2, 1]) == [1, 2]` },
     { type: "learn", title: "Solve smaller versions", html: py`
       <p>A <b>recursive</b> function solves a problem by solving a smaller copy of it. It needs:</p>
       <ol><li>a <b>base case</b> that stops the recursion</li><li>a <b>recursive case</b> that moves toward the base case</li></ol>
-      <pre><code>def countdown(n):
+      <pre data-run><code>def countdown(n):
     if n == 0:          # base case
         print("liftoff!")
         return
@@ -888,11 +971,22 @@ assert sum_digits(99999) == 45` },
 assert power(5, 0) == 1
 assert power(3, 7) == 2187
 assert power(3, 5000) == 3 ** 5000` },
+    { type: "predict", code: py`def countdown(n):
+    if n == 0:
+        return 0
+    print(n)
+    return n + countdown(n - 1)
+
+print(countdown(3))`,
+      answer: py`3
+2
+1
+6` },
   ]},
   { id: "graphs", title: "Graphs & BFS", blurb: "Networks and shortest paths", steps: [
     { type: "learn", title: "Things and connections", html: py`
       <p>A <b>graph</b> is nodes connected by edges: maps, friendships, the web. In Python an <b>adjacency dict</b> is the easiest form:</p>
-      <pre><code>graph = {
+      <pre data-run><code>graph = {
     "A": ["B", "C"],
     "B": ["D"],
     "C": ["D"],
@@ -1063,15 +1157,19 @@ assert t < 0.5, f"Took {t:.2f}s. Aim for O(n)."` },
   { id: "memo", title: "Memoization", blurb: "Never solve the same thing twice", steps: [
     { type: "learn", title: "Cache your answers", html: py`
       <p>Naive recursive Fibonacci recomputes the same values again and again: <code>fib(40)</code> makes over 300 million calls!</p>
-      <pre><code>def fib(n):
+      <pre data-run><code>def fib(n):
     if n < 2: return n
-    return fib(n - 1) + fib(n - 2)    # O(2ⁿ)</code></pre>
+    return fib(n - 1) + fib(n - 2)    # O(2ⁿ)
+
+print(fib(5))</code></pre>
       <p><b>Memoization</b> stores results in a dict so each subproblem is solved once: O(n). Python can even do it for you with <code>functools.cache</code>.</p>
-      <pre><code>from functools import cache
+      <pre data-run><code>from functools import cache
 
 @cache
 def fib(n):
-    return n if n < 2 else fib(n - 1) + fib(n - 2)</code></pre>` },
+    return n if n < 2 else fib(n - 1) + fib(n - 2)
+
+print(fib(30))</code></pre>` },
     { type: "quiz", q: "Roughly how many calls does naive recursive fib(40) make?", options: ["Over 300 million", "40", "About 800", "80"], answer: 0, why: [null, "40 calls would be one call per value, which is exactly what memoization gives you. Plain recursion does far more.", "The calls roughly double with each level, which grows much faster than 800.", "Without caching, the same fib values are recomputed again and again, so it's far more than 80."], explain: "The call tree nearly doubles at each level. That's why caching helps so much." },
     { type: "code", prompt: py`<p>Write <code>fib(n)</code> that is fast for large <code>n</code> (the test calls <code>fib(90)</code>). Use a dict cache or <code>functools.cache</code>.</p>`,
       starter: py`def fib(n):
@@ -1105,6 +1203,15 @@ assert count_paths(3, 3) == 6
 r, t = timed(count_paths, 18, 18)
 assert r == 2333606220, f"Got {r}"
 assert t < 0.5, "Too slow. Cache subproblems."` },
+    { type: "predict", code: py`calls = 0
+
+def fib(n):
+    global calls
+    calls += 1
+    return n if n < 2 else fib(n - 1) + fib(n - 2)
+
+print(fib(4), calls)`,
+      answer: py`3 9` },
   ]},
   { id: "space", title: "Memory & Generators", blurb: "Do more with less space", steps: [
     { type: "learn", title: "Space complexity", html: py`
@@ -1113,9 +1220,12 @@ assert t < 0.5, "Too slow. Cache subproblems."` },
         <li><b>In-place</b> algorithms modify the input instead of copying it: O(1) extra space.</li>
         <li><b>Generators</b> produce values one at a time with <code>yield</code> instead of building a whole list.</li>
       </ul>
-      <pre><code>def count_up(n):
+      <pre data-run><code>def count_up(n):
     for i in range(n):
         yield i          # lazy: one value at a time
+
+for n in count_up(3):
+    print(n)
 
 sum(x * x for x in range(10**7))   # no giant list in memory</code></pre>
       <p>Try the Playground's <b>Run + Profile</b> to see peak memory.</p>` },
@@ -1151,6 +1261,17 @@ assert next(g) == 0 and next(g) == 1
 assert list(squares(5)) == [0, 1, 4, 9, 16]
 assert list(squares(0)) == []
 assert sum(squares(100000)) == 333328333350000` },
+    { type: "predict", code: py`def squares(n):
+    for i in range(n):
+        yield i * i
+
+gen = squares(3)
+print(next(gen))
+print(next(gen))
+print(list(gen))`,
+      answer: py`0
+1
+[4]` },
   ]},
   ]
 },

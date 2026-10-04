@@ -1,5 +1,5 @@
 -- =====================================================================
--- Pythonic backend schema (Supabase / Postgres)
+-- Codestep backend schema (Supabase / Postgres)
 --
 -- Security model
 --   * Every table has row level security (RLS) on. The browser only ever holds
@@ -48,7 +48,7 @@ create unique index if not exists profiles_username_lower_key on public.profiles
 -- Names nobody may take (impersonation / routing). Used by the profile trigger, the sign-up trigger and the availability check.
 create or replace function public.is_reserved_username(p text)
 returns boolean language sql immutable set search_path = '' as $$
-  select lower(p) = any (array['admin','administrator','root','support','help','pip','pythonic','moderator','mod','staff','system','official','null','undefined','api','www'])
+  select lower(p) = any (array['admin','administrator','root','support','help','bit','codestep','moderator','mod','staff','system','official','null','undefined','api','www'])
 $$;
 
 create or replace function public.profiles_guard()
@@ -82,7 +82,7 @@ begin
     uname := wanted; picked := true;
   end if;
   while uname is null and tries < 20 loop
-    uname := 'pip' || substr(md5(random()::text || new.id::text || tries::text), 1, 7);
+    uname := 'coder' || substr(md5(random()::text || new.id::text || tries::text), 1, 7);
     if exists (select 1 from public.profiles where lower(username) = lower(uname)) then uname := null; end if;
     tries := tries + 1;
   end loop;
@@ -133,13 +133,45 @@ create policy completions_select_own on public.completions for select to authent
 revoke all on public.completions from anon, authenticated;
 grant select on public.completions to authenticated;   -- writes happen only through record_step()
 
--- consecutive days with activity, counted back from today (or yesterday), in the user's time zone
+-- ---------------------------------------------------------------- spaced review
+-- One row per exercise the user has done: when it is next due and how well it is remembered (see srs.js).
+create table if not exists public.reviews (
+  user_id       uuid not null references auth.users (id) on delete cascade,
+  step_key      text not null references public.lesson_steps (step_key),
+  due           date not null,
+  interval_days int  not null check (interval_days between 0 and 365),
+  ease          numeric(3, 2) not null check (ease between 1.3 and 3.0),
+  reps          int  not null check (reps between 0 and 1000),
+  lapses        int  not null check (lapses between 0 and 1000),
+  last_at       timestamptz not null default now(),
+  primary key (user_id, step_key)
+);
+alter table public.reviews enable row level security;
+drop policy if exists reviews_select_own on public.reviews;
+create policy reviews_select_own on public.reviews for select to authenticated using (user_id = auth.uid());
+revoke all on public.reviews from anon, authenticated;
+grant select on public.reviews to authenticated;   -- writes happen only through record_review() / seed_reviews()
+
+-- Append-only history of answers. It counts towards the daily streak and rate-limits writes; clients never read it directly.
+create table if not exists public.review_log (
+  user_id   uuid not null references auth.users (id) on delete cascade,
+  step_key  text not null references public.lesson_steps (step_key),
+  quality   text not null check (quality in ('again', 'hard', 'good')),
+  logged_at timestamptz not null default now()
+);
+create index if not exists review_log_user_time on public.review_log (user_id, logged_at);
+alter table public.review_log enable row level security;
+revoke all on public.review_log from anon, authenticated;
+
+-- consecutive days with activity (lessons or reviews), counted back from today (or yesterday), in the user's time zone
 create or replace function public.compute_streak(p_user uuid, p_tz text)
 returns int language plpgsql stable security definer set search_path = public as $$
 declare days date[]; cur date := (now() at time zone p_tz)::date; n int := 0;
 begin
   select array_agg(d order by d desc) into days
-  from (select distinct (created_at at time zone p_tz)::date as d from public.completions where user_id = p_user order by d desc limit 800) x;
+  from (select d from (select (created_at at time zone p_tz)::date as d from public.completions where user_id = p_user
+                       union select (logged_at at time zone p_tz)::date from public.review_log where user_id = p_user) u
+        order by d desc limit 800) x;
   if days is null then return 0; end if;
   if not (cur = any (days)) then cur := cur - 1; end if;
   while cur = any (days) loop n := n + 1; cur := cur - 1; end loop;
@@ -163,7 +195,9 @@ begin
     'steps',    coalesce((select jsonb_agg(step_key) from public.completions where user_id = uid), '[]'::jsonb),
     'daily',    coalesce((select jsonb_object_agg(d, x) from (
                    select (created_at at time zone tz)::date::text as d, sum(xp)::int as x from public.completions
-                   where user_id = uid and created_at > now() - interval '21 days' group by 1) q), '{}'::jsonb)
+                   where user_id = uid and created_at > now() - interval '21 days' group by 1) q), '{}'::jsonb),
+    'reviews',  coalesce((select jsonb_agg(jsonb_build_object('k', step_key, 'due', due, 'interval', interval_days, 'ease', ease, 'reps', reps, 'lapses', lapses))
+                          from public.reviews where user_id = uid), '[]'::jsonb)
   ) into res;
   return res;
 end $$;
@@ -198,6 +232,37 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------- leaderboard
+create or replace function public.record_review(p_step_key text, p_quality text, p_interval int, p_ease numeric, p_reps int, p_lapses int, p_due date)
+returns void language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid(); recent int;
+begin
+  if uid is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if not exists (select 1 from public.lesson_steps where step_key = p_step_key and not is_bonus) then raise exception 'unknown step' using errcode = '22023'; end if;
+  if p_quality not in ('again', 'hard', 'good') or p_due < current_date - 2 or p_due > current_date + 400 then raise exception 'invalid review' using errcode = '22023'; end if;
+  select count(*) into recent from public.review_log where user_id = uid and logged_at > now() - interval '1 minute';
+  if recent >= 40 then raise exception 'rate limited' using errcode = '54000'; end if;
+  insert into public.review_log (user_id, step_key, quality) values (uid, p_step_key, p_quality);
+  insert into public.reviews (user_id, step_key, due, interval_days, ease, reps, lapses)
+  values (uid, p_step_key, p_due, p_interval, p_ease, p_reps, p_lapses)
+  on conflict (user_id, step_key) do update
+    set due = excluded.due, interval_days = excluded.interval_days, ease = excluded.ease, reps = excluded.reps, lapses = excluded.lapses, last_at = now();
+end $$;
+
+-- Starter review items for exercises completed before reviews existed. Never overwrites an existing schedule.
+create or replace function public.seed_reviews(p_items jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid(); it jsonb;
+begin
+  if uid is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) > 200 then raise exception 'invalid items' using errcode = '22023'; end if;
+  for it in select * from jsonb_array_elements(p_items) loop
+    insert into public.reviews (user_id, step_key, due, interval_days, ease, reps, lapses)
+    select uid, it ->> 'k', least(greatest((it ->> 'due')::date, current_date), current_date + 7), least(greatest((it ->> 'interval')::int, 1), 7), 2.5, 1, 0
+    where exists (select 1 from public.lesson_steps where step_key = it ->> 'k' and not is_bonus)
+    on conflict do nothing;
+  end loop;
+end $$;
+
 create or replace function public.get_leaderboard(p_period text default 'week', p_limit int default 50)
 returns table (rank bigint, username text, avatar text, avatar_version int, user_id uuid, xp int, is_me boolean)
 language sql stable security definer set search_path = public as $$
@@ -238,7 +303,8 @@ begin
   return jsonb_build_object(
     'exported_at', now(),
     'profile', (select to_jsonb(p) - 'id' from public.profiles p where p.id = auth.uid()),
-    'completions', coalesce((select jsonb_agg(jsonb_build_object('step', step_key, 'xp', xp, 'at', created_at) order by created_at) from public.completions where user_id = auth.uid()), '[]'::jsonb));
+    'completions', coalesce((select jsonb_agg(jsonb_build_object('step', step_key, 'xp', xp, 'at', created_at) order by created_at) from public.completions where user_id = auth.uid()), '[]'::jsonb),
+    'reviews', coalesce((select jsonb_agg(jsonb_build_object('step', step_key, 'due', due, 'interval_days', interval_days, 'ease', ease, 'reps', reps, 'lapses', lapses)) from public.reviews where user_id = auth.uid()), '[]'::jsonb));
 end $$;
 
 -- ---------------------------------------------------------------- email jobs (service role only)
@@ -255,6 +321,7 @@ begin
       and (extract(hour from (now() at time zone p.timezone)) * 60 + extract(minute from (now() at time zone p.timezone))) >= (extract(hour from p.reminder_time) * 60 + extract(minute from p.reminder_time))
       and (extract(hour from (now() at time zone p.timezone)) * 60 + extract(minute from (now() at time zone p.timezone))) <  (extract(hour from p.reminder_time) * 60 + extract(minute from p.reminder_time)) + 120
       and not exists (select 1 from public.completions c where c.user_id = p.id and (c.created_at at time zone p.timezone)::date = (now() at time zone p.timezone)::date)
+      and not exists (select 1 from public.review_log r where r.user_id = p.id and (r.logged_at at time zone p.timezone)::date = (now() at time zone p.timezone)::date)
     returning p.id, p.username, p.language, p.timezone
   ), d as (
     update public.profiles p set last_digest_on = (now() at time zone p.timezone)::date
@@ -281,10 +348,10 @@ end $$;
 
 -- Lock down function execution: nothing is callable by default; grant explicitly.
 revoke all on function public.handle_new_user() from public, anon, authenticated;   -- trigger function: never callable as an API endpoint
-revoke all on function public.get_my_progress(), public.record_step(text, int), public.import_guest_progress(text[]),
+revoke all on function public.get_my_progress(), public.record_step(text, int), public.import_guest_progress(text[]), public.record_review(text, text, int, numeric, int, int, date), public.seed_reviews(jsonb),
   public.get_leaderboard(text, int), public.username_available(text), public.delete_my_account(), public.export_my_data(),
   public.claim_due_emails(), public.set_email_pref(uuid, text, boolean) from public, anon, authenticated;
-grant execute on function public.get_my_progress(), public.record_step(text, int), public.import_guest_progress(text[]),
+grant execute on function public.get_my_progress(), public.record_step(text, int), public.import_guest_progress(text[]), public.record_review(text, text, int, numeric, int, int, date), public.seed_reviews(jsonb),
   public.get_leaderboard(text, int), public.delete_my_account(), public.export_my_data() to authenticated;
 grant execute on function public.username_available(text) to anon, authenticated;
 grant execute on function public.claim_due_emails(), public.set_email_pref(uuid, text, boolean) to service_role;

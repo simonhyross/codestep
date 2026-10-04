@@ -7,7 +7,7 @@
 (() => {
 const cfg = window.PYTHONIC_CONFIG || {};
 const LOCAL = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
-const wantMock = LOCAL && (new URLSearchParams(location.search).has("mock") || localStorage.getItem("pythonic:mock") === "1");
+const wantMock = LOCAL && (new URLSearchParams(location.search).has("mock") || localStorage.getItem("codestep:mock") === "1");
 const redirectUrl = () => location.origin + location.pathname;
 
 function errKey(e) {
@@ -67,6 +67,8 @@ function makeSupabase() {
 
     getProgress: () => run(() => client.rpc("get_my_progress")),
     recordStep: (key, xp) => run(() => client.rpc("record_step", { p_step_key: key, p_xp: xp })),
+    recordReview: (key, quality, it) => run(() => client.rpc("record_review", { p_step_key: key, p_quality: quality, p_interval: it.interval, p_ease: it.ease, p_reps: it.reps, p_lapses: it.lapses, p_due: it.due })),
+    seedReviews: items => run(() => client.rpc("seed_reviews", { p_items: items })),
     importGuest: lessons => run(() => client.rpc("import_guest_progress", { p_lessons: lessons })),
     leaderboard: (period, limit = 50) => run(() => client.rpc("get_leaderboard", { p_period: period, p_limit: limit })),
     exportData: () => run(() => client.rpc("export_my_data")),
@@ -76,28 +78,30 @@ function makeSupabase() {
 
 /* ------------------------------------------------------------ Mock (dev only) */
 function makeMock() {
-  const KEY = "pythonic:mockdb";
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || { users: [], profiles: {}, done: {}, avatars: {}, session: null }; } catch { return { users: [], profiles: {}, done: {}, avatars: {}, session: null }; } };
+  const KEY = "codestep:mockdb";
+  const empty = () => ({ users: [], profiles: {}, done: {}, reviews: {}, rlog: {}, avatars: {}, session: null });
+  const load = () => { try { return { ...empty(), ...JSON.parse(localStorage.getItem(KEY)) }; } catch { return empty(); } };
   let db = load();
   const persist = () => localStorage.setItem(KEY, JSON.stringify(db));
   const delay = (v) => new Promise(r => setTimeout(() => r(v), 120));
   const ok = data => delay({ data });
   const bad = (message) => delay(fail(new Error(message)));
   let onAuthCb = null;
-  const RESERVED = ["admin", "administrator", "root", "support", "help", "pip", "pythonic", "moderator", "mod", "staff", "system", "official", "null", "undefined", "api", "www"];
-  const STEPS = {}; (window.UNITS || []).forEach(u => u.lessons.forEach(l => { l.steps.forEach((s, i) => { const x = { quiz: 5, code: 15 }[s.type]; if (x) STEPS[`${l.id}:${i}`] = { lesson: l.id, max: x, bonus: false }; }); STEPS[`${l.id}:bonus`] = { lesson: l.id, max: 20, bonus: true }; }));
+  const RESERVED = ["admin", "administrator", "root", "support", "help", "bit", "codestep", "moderator", "mod", "staff", "system", "official", "null", "undefined", "api", "www"];
+  const STEPS = {}; (window.UNITS || []).forEach(u => u.lessons.forEach(l => { l.steps.forEach((s, i) => { const x = { quiz: 5, predict: 5, code: 15 }[s.type]; if (x) STEPS[`${l.id}:${i}`] = { lesson: l.id, max: x, bonus: false }; }); STEPS[`${l.id}:bonus`] = { lesson: l.id, max: 20, bonus: true }; }));
   const me = () => db.session && db.users.find(u => u.id === db.session.uid);
   const emit = (event) => { const u = me(); setTimeout(() => onAuthCb && onAuthCb(event, u ? toUser2(u) : null), 0); };
   const toUser2 = u => ({ id: u.id, email: u.email, created_at: u.created, providers: u.providers });
   const day = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
   const weekStart = () => { const d = new Date(); const dow = (d.getUTCDay() + 6) % 7; return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dow); };
   const progressOf = id => {
-    const c = db.done[id] || {}, rows = Object.entries(c), days = new Set(rows.map(([, v]) => day(v.at)));
+    const c = db.done[id] || {}, rows = Object.entries(c), days = new Set([...rows.map(([, v]) => day(v.at)), ...(db.rlog[id] || []).map(day)]);
     let cur = new Date(), n = 0; if (!days.has(day(cur))) cur.setDate(cur.getDate() - 1);
     while (days.has(day(cur))) { n++; cur.setDate(cur.getDate() - 1); }
     const daily = {}; rows.forEach(([, v]) => { const k = day(v.at); daily[k] = (daily[k] || 0) + v.xp; });
     return { xp: rows.reduce((a, [, v]) => a + v.xp, 0), week_xp: rows.filter(([, v]) => v.at >= weekStart()).reduce((a, [, v]) => a + v.xp, 0), today_xp: daily[day(Date.now())] || 0, streak: n, daily,
-      done: rows.filter(([k]) => STEPS[k] && STEPS[k].bonus).map(([k]) => STEPS[k].lesson), steps: rows.map(([k]) => k) };
+      done: rows.filter(([k]) => STEPS[k] && STEPS[k].bonus).map(([k]) => STEPS[k].lesson), steps: rows.map(([k]) => k),
+      reviews: Object.entries(db.reviews[id] || {}).map(([k, v]) => ({ k, ...v })) };
   };
   const BOTS = ["codewren", "bytefox", "loop_lily", "nina_py", "stack_sam", "hash_hana", "recurse_ro", "tuple_tim", "lambda_lu", "dict_dan", "bit_bea", "queue_quin"].map((u, i) => ({ id: "bot" + i, username: u, avatar: "preset:" + (1 + i % 8), week: Math.max(0, 210 - i * 17 + (i % 3) * 5), all: 900 - i * 61 }));
   const mkProfile = (id, username, picked) => ({ id, username, username_set: picked, display_name: null, avatar: "preset:" + (1 + Math.floor(Math.random() * 8)), avatar_version: 0, language: "en", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", theme: "system", daily_goal: 50, email_notifications: false, reminders_enabled: false, reminder_time: "18:00:00", show_on_leaderboard: true, guest_imported: false, username_changed_at: null, created_at: new Date().toISOString() });
@@ -111,7 +115,7 @@ function makeMock() {
       const picked = /^[A-Za-z0-9_]{3,20}$/.test(username || "") && !RESERVED.includes(String(username).toLowerCase()) && !Object.values(db.profiles).some(p => p.username.toLowerCase() === String(username).toLowerCase());
       const id = "u" + Math.random().toString(36).slice(2, 10);
       db.users.push({ id, email: email.toLowerCase(), pw: password, created: new Date().toISOString(), providers: ["email"] });
-      db.profiles[id] = mkProfile(id, picked ? username : "pip" + Math.random().toString(16).slice(2, 9), picked);
+      db.profiles[id] = mkProfile(id, picked ? username : "coder" + Math.random().toString(16).slice(2, 9), picked);
       db.session = { uid: id }; persist(); emit("SIGNED_IN"); return delay({ data: { needsConfirm: false } });
     },
     async signIn({ email, password }) {
@@ -122,7 +126,7 @@ function makeMock() {
     async signInGoogle() {
       const email = (prompt("Demo Google sign-in: enter an email") || "").trim().toLowerCase(); if (!email) return delay({ data: null });
       let u = db.users.find(x => x.email === email);
-      if (!u) { u = { id: "u" + Math.random().toString(36).slice(2, 10), email, pw: null, created: new Date().toISOString(), providers: ["google"] }; db.users.push(u); db.profiles[u.id] = mkProfile(u.id, "pip" + Math.random().toString(16).slice(2, 9), false); }
+      if (!u) { u = { id: "u" + Math.random().toString(36).slice(2, 10), email, pw: null, created: new Date().toISOString(), providers: ["google"] }; db.users.push(u); db.profiles[u.id] = mkProfile(u.id, "coder" + Math.random().toString(16).slice(2, 9), false); }
       db.session = { uid: u.id }; persist(); emit("SIGNED_IN"); return delay({ data: {} });
     },
     async signOut() { db.session = null; persist(); emit("SIGNED_OUT"); return delay({ data: {} }); },
@@ -159,6 +163,17 @@ function makeMock() {
       if (!c[key]) c[key] = { xp: Math.min(Math.max(Number(xp) || 0, 0), st.max), at: Date.now() };
       persist(); return ok(progressOf(me().id));
     },
+    async recordReview(key, quality, it) {
+      const g = guard(); if (g) return bad(g);
+      if (!STEPS[key] || STEPS[key].bonus || !["again", "hard", "good"].includes(quality)) return bad("unknown step");
+      (db.reviews[me().id] = db.reviews[me().id] || {})[key] = { due: it.due, interval: it.interval, ease: it.ease, reps: it.reps, lapses: it.lapses };
+      (db.rlog[me().id] = db.rlog[me().id] || []).push(Date.now()); persist(); return ok({});
+    },
+    async seedReviews(items) {
+      const g = guard(); if (g) return bad(g); const r = (db.reviews[me().id] = db.reviews[me().id] || {});
+      (items || []).forEach(x => { if (STEPS[x.k] && !STEPS[x.k].bonus && !r[x.k]) r[x.k] = { due: x.due, interval: x.interval, ease: 2.5, reps: 1, lapses: 0 }; });
+      persist(); return ok({});
+    },
     async importGuest(lessons) {
       const g = guard(); if (g) return bad(g); const p = db.profiles[me().id];
       if (!p.guest_imported) { const c = (db.done[me().id] = db.done[me().id] || {}); Object.entries(STEPS).forEach(([k, s]) => { if ((lessons || []).includes(s.lesson) && !c[k]) c[k] = { xp: s.max, at: Date.now() - 8 * 864e5 }; }); p.guest_imported = true; persist(); }
@@ -173,7 +188,7 @@ function makeMock() {
       return ok(rows.filter(r => r.rank <= limit || r.is_me));
     },
     async exportData() { const g = guard(); if (g) return bad(g); const id = me().id; return ok({ exported_at: new Date().toISOString(), profile: { ...db.profiles[id], id: undefined }, completions: Object.entries(db.done[id] || {}).map(([step, v]) => ({ step, xp: v.xp, at: new Date(v.at).toISOString() })) }); },
-    async deleteAccount() { const g = guard(); if (g) return bad(g); const id = me().id; db.users = db.users.filter(u => u.id !== id); delete db.profiles[id]; delete db.done[id]; delete db.avatars[id]; db.session = null; persist(); emit("SIGNED_OUT"); return ok({}); },
+    async deleteAccount() { const g = guard(); if (g) return bad(g); const id = me().id; db.users = db.users.filter(u => u.id !== id); delete db.profiles[id]; delete db.done[id]; delete db.reviews[id]; delete db.rlog[id]; delete db.avatars[id]; db.session = null; persist(); emit("SIGNED_OUT"); return ok({}); },
   };
 }
 
