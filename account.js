@@ -21,17 +21,18 @@ const PRESETS = [
 ];
 function presetSvg(n) {          // the mascot's head and hoodie, in the preset's colours
   const p = PRESETS[(n - 1) % 8] || PRESETS[0], ink = "#0b1b3a";
+  const head = "M60 15 C82 15 100 24 104 42 C107 52 107 62 100 70 C92 79 76 82 60 82 C44 82 28 79 20 70 C13 62 13 52 16 42 C20 24 38 15 60 15Z";
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="${p.bg}"/>
     <g transform="translate(2 6) scale(.8)">
       <circle cx="26" cy="24" r="13" fill="${ink}"/><circle cx="94" cy="24" r="13" fill="${ink}"/>
       <path d="M22 112 C22 96 34 86 60 86 C86 86 98 96 98 112Z" fill="${p.body}" stroke="${ink}" stroke-width="4.4" stroke-linejoin="round"/>
-      <path d="${HEAD}" fill="#fff" stroke="${ink}" stroke-width="4.4" stroke-linejoin="round"/>
+      <path d="${head}" fill="#fff" stroke="${ink}" stroke-width="4.4" stroke-linejoin="round"/>
       <ellipse cx="38.5" cy="52" rx="13.4" ry="16.6" transform="rotate(24 38.5 52)" fill="${ink}"/><ellipse cx="81.5" cy="52" rx="13.4" ry="16.6" transform="rotate(-24 81.5 52)" fill="${ink}"/>
       <circle cx="38.5" cy="53" r="6.2" fill="#fff"/><circle cx="81.5" cy="53" r="6.2" fill="#fff"/>
-      <circle cx="39.5" cy="54" r="3.4" fill="${ink}"/><circle cx="80.5" cy="54" r="3.4" fill="${ink}"/>
+      <circle cx="39.5" cy="54" r="3.4" fill="${ink}"/><circle cx="80.5" cy="54" r="3.4" fill="${ink}"/><circle cx="41" cy="52.6" r="1.2" fill="#fff"/><circle cx="82" cy="52.6" r="1.2" fill="#fff"/>
       <circle cx="38.5" cy="52" r="10" fill="none" stroke="${p.rim}" stroke-width="3.6"/><circle cx="81.5" cy="52" r="10" fill="none" stroke="${p.rim}" stroke-width="3.6"/>
       <path d="M48.5 49 Q60 43.5 71.5 49" fill="none" stroke="${ink}" stroke-width="7" stroke-linecap="round"/><path d="M48.5 49 Q60 43.5 71.5 49" fill="none" stroke="${p.rim}" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="31" cy="75.5" r="4.8" fill="#ff7a59" opacity=".55"/><circle cx="89" cy="75.5" r="4.8" fill="#ff7a59" opacity=".55"/>
+      <ellipse cx="37" cy="72.4" rx="4.8" ry="3.5" fill="#ff7a59" opacity=".55"/><ellipse cx="83" cy="72.4" rx="4.8" ry="3.5" fill="#ff7a59" opacity=".55"/>
       <path d="M54.2 60 Q60 57.2 65.8 60 Q65 65.8 60 67 Q55 65.8 54.2 60Z" fill="${ink}" stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"/>
       <path d="M60 67 V69" stroke="${ink}" stroke-width="2.8" stroke-linecap="round"/><path d="M52 68.6 Q56 75.2 60 69 Q64 75.2 68 68.6" fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </g></svg>`;
