@@ -9,7 +9,7 @@ const { UNITS, Tiers } = window;
 let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : (fail++, console.log("FAIL:", m)); };
 
 const g = Tiers.build(UNITS);                                   // throws on unknown prerequisites or cycles
-ok(g.order.length === 24 && g.rows.flat().length === 24, "every lesson is in exactly one row");
+ok(g.order.length === 25 && g.rows.flat().length === 25, "every lesson is in exactly one row");
 ok(g.rows.every(r => r && r.length >= 1), "no empty rows");
 ok(g.rows[0].length === 1 && g.rows[0][0] === "hello", "the path starts with Hello");
 ok(Math.max(...g.rows.map(r => r.length)) <= 4, `rows are small enough to read as choices (widest: ${Math.max(...g.rows.map(r => r.length))})`);
@@ -29,4 +29,5 @@ ok(Tiers.isUnlocked(g, "functions", upToLoops) && Tiers.isUnlocked(g, "lists", u
 ok(Tiers.nextUp(g, upToLoops) === "functions", "next up is the first open lesson");
 ok(Tiers.nextUp(g, { ...upToLoops, functions: 1 }) === "lists", "finishing one still leaves its sibling open");
 ok(Tiers.nextUp(g, Object.fromEntries(g.order.map(id => [id, 1]))) === null, "nothing to suggest when everything is done");
+ok(g.rows[g.rows.length - 1].length === 1 && g.rows[g.rows.length - 1][0] === "gradebook", "the path ends at one goal: the Gradebook project");
 console.log(`${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

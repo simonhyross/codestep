@@ -40,6 +40,7 @@ It needs an internet connection on first load (Pyodide, CodeMirror and fonts com
 | `pyruntime.js` | Python-side runner, test harness, profiler, tracer (visualizer) and linter |
 | `visualizer.js` | The "Watch it run" screen |
 | `srs.js` | Spaced-repetition scheduler (pure functions) |
+| `tiers.js` | Turns each lesson's `needs` into path rows (pure functions) |
 | `app.js` | UI, routing, lessons, reviews, progress, worker management |
 | `account.js` / `backend.js` / `config.js` | Sign-in, settings, leaderboard, sync; Supabase adapter plus a localhost-only demo backend; public project settings |
 | `i18n.js` | Interface translations |
@@ -53,6 +54,7 @@ It needs an internet connection on first load (Pyodide, CodeMirror and fonts com
 python3 tests/lessons_test.py        # every solution passes, every starter fails, predict answers match real output
 python3 tests/tracer_test.py         # the visualizer's tracer
 node tests/srs.test.mjs              # the review scheduler
+node tests/tiers.test.mjs            # path rows and prerequisites
 npm i --no-save @electric-sql/pglite
 node supabase/tests/schema.test.mjs  # database rules, XP caps, reviews, leaderboard
 node --experimental-strip-types supabase/tests/mail.test.mjs
@@ -60,7 +62,7 @@ node --experimental-strip-types supabase/tests/mail.test.mjs
 
 ## Adding a lesson
 
-Add an object to a unit's `lessons` array in `lessons.js`. Step types: `learn` (HTML; add `data-run` to a `<pre>` to give it a
+Add an object to a unit's `lessons` array in `lessons.js`, with `needs: [ids of lessons it builds on]` (it appears in the first row after all of them). Step types: `learn` (HTML; add `data-run` to a `<pre>` to give it a
 "Watch it run" button), `quiz` (with a reason for every wrong option), `predict` (`code` and the exact `answer`) and `code`
 (`starter`, `solution`, `hint`, `tests`). Test code runs after the learner's code and can use `output`, `source`,
 `run_with(**vars)` (re-run with different top-level variables) and `timed(fn, *args)`.

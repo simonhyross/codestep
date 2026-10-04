@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks a commit if the curriculum, tracer, scheduler or path tests fail.
+# Enable once per clone: git config core.hooksPath .githooks   (skip a single commit with --no-verify)
+exec sh scripts/run-tests.sh

@@ -114,5 +114,11 @@ insert into public.lesson_steps (step_key, lesson_id, max_xp, is_bonus) values
 ('space:2', 'space', 15, false),
 ('space:3', 'space', 15, false),
 ('space:4', 'space', 5, false),
-('space:bonus', 'space', 20, true)
+('space:bonus', 'space', 20, true),
+('gradebook:1', 'gradebook', 15, false),
+('gradebook:2', 'gradebook', 15, false),
+('gradebook:3', 'gradebook', 15, false),
+('gradebook:4', 'gradebook', 15, false),
+('gradebook:5', 'gradebook', 5, false),
+('gradebook:bonus', 'gradebook', 20, true)
 on conflict (step_key) do update set max_xp = excluded.max_xp, lesson_id = excluded.lesson_id, is_bonus = excluded.is_bonus;

@@ -51,7 +51,7 @@ const ICONS = {
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
 };
 const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;
-const LESSON_ICON = { hello: "sparkle", numbers: "hash", decisions: "branch", loops: "repeat", functions: "braces", lists: "list", dicts: "key", comprehensions: "bolt", stacks: "layers", queues: "queue", linked: "link", hashing: "grid", trees: "tree", linear: "search", binary: "target", sorting: "bars", merge: "merge", recursion: "refresh", graphs: "network", bigo: "trend", spot: "timer", twosum: "scale", memo: "database", space: "chip" };
+const LESSON_ICON = { gradebook: "star",  hello: "sparkle", numbers: "hash", decisions: "branch", loops: "repeat", functions: "braces", lists: "list", dicts: "key", comprehensions: "bolt", stacks: "layers", queues: "queue", linked: "link", hashing: "grid", trees: "tree", linear: "search", binary: "target", sorting: "bars", merge: "merge", recursion: "refresh", graphs: "network", bigo: "trend", spot: "timer", twosum: "scale", memo: "database", space: "chip" };
 const DECO = [
   '<circle cx="72" cy="28" r="34"/><circle cx="26" cy="82" r="15"/>',
   '<path d="M40 0h14L14 100H0zM70 0h14L44 100H30zM100 0h14L74 100H60z"/>',
@@ -137,8 +137,10 @@ const hooks = { step: null, review: null, seed: null };
 const FLAT = [];
 UNITS.forEach(u => u.lessons.forEach(l => FLAT.push({ unit: u, lesson: l, i: FLAT.length })));
 const lessonById = id => FLAT.find(x => x.lesson.id === id);
-const isUnlocked = i => S.unlockAll || i === 0 || !!S.done[FLAT[i - 1].lesson.id];
-const currentLesson = () => FLAT.find(x => !S.done[x.lesson.id]);
+const GRAPH = Tiers.build(UNITS);                                   // prerequisite rows: lessons in one row can be done in any order
+const isUnlocked = id => S.unlockAll || !!S.done[id] || Tiers.isUnlocked(GRAPH, id, S.done);
+const missingPrereqs = id => GRAPH.byId[id].needs.filter(p => !S.done[p]).map(p => lessonById(p).lesson.title);
+const currentLesson = () => { const id = Tiers.nextUp(GRAPH, S.done); return id ? lessonById(id) : null; };
 const STEP_XP = { quiz: 5, predict: 5, code: 15 };
 const lessonXp = l => l.steps.reduce((a, s) => a + (STEP_XP[s.type] || 0), 20);
 
@@ -428,19 +430,24 @@ const stats = () => `<div class="stat fire" title="${esc(t("streak"))}">${ico("f
 function renderLearn() {
   const cur = currentLesson();
   const dx = [0, 46, 74, 46, 0, -46, -74, -46];
-  const units = UNITS.map(u => {
-    const done = u.lessons.filter(l => S.done[l.id]).length;
-    const nodes = u.lessons.map((l, k) => {
-      const f = lessonById(l.id);
-      const state = S.done[l.id] ? "done" : !isUnlocked(f.i) ? "locked" : (cur && cur.lesson.id === l.id ? "current" : "open");
-      const pop = openNode === l.id ? popover(f, state) : "";
-      return `<div class="node-row"><div class="node-wrap" style="--dx:${dx[k % 8]}px">
-        ${state === "current" && openNode !== l.id ? `<span class="start-tag">${t("start")}</span>` : ""}
-        <button class="node ${state}" data-node="${l.id}" aria-label="${esc(l.title)} (${state})">${ico(state === "locked" ? "lock" : LESSON_ICON[l.id] || "sparkle")}${state === "done" ? `<span class="badge">${ico("check")}</span>` : ""}</button>
-        <span class="node-label">${esc(l.title)}</span></div>${pop}</div>`;
+  const rows = GRAPH.rows.map((ids, r) => {
+    const nodes = ids.map(id => {
+      const f = lessonById(id), l = f.lesson;
+      const state = S.done[id] ? "done" : !isUnlocked(id) ? "locked" : (cur && cur.lesson.id === id ? "current" : "open");
+      return `<div class="node-wrap u-${f.unit.color}">
+        ${state === "current" && openNode !== id ? `<span class="start-tag">${t("start")}</span>` : ""}
+        <button class="node ${state}" data-node="${id}" aria-label="${esc(l.title)} (${state})">${ico(state === "locked" ? "lock" : LESSON_ICON[id] || "sparkle")}${state === "done" ? `<span class="badge">${ico("check")}</span>` : ""}</button>
+        <span class="node-label">${esc(l.title)}</span></div>`;
     }).join("");
-    return `<section class="unit u-${u.color}"><div class="unit-banner"><svg class="deco" viewBox="0 0 100 100" aria-hidden="true">${DECO[UNITS.indexOf(u) % DECO.length]}</svg><small>${t("unit_n", { n: UNITS.indexOf(u) + 1 })}</small><h2>${esc(u.title)}</h2><p>${esc(u.desc)}</p><div class="bar"><i style="width:${done / u.lessons.length * 100}%"></i></div></div><div class="nodes">${nodes}</div></section>`;
+    const open = ids.find(id => id === openNode);
+    const head = ids.length > 1 ? t("tier_any", { n: ids.length }) : t("tier_one");
+    return `<section class="tier"><div class="tier-head"><small>${t("tier_n", { n: r + 1 })}</small><span>${head}</span></div><div class="tier-nodes">${nodes}</div>${open ? popover(lessonById(open), S.done[open] ? "done" : !isUnlocked(open) ? "locked" : "open") : ""}</section>`;
   }).join("");
+  const goalId = GRAPH.order[GRAPH.order.length - 1], goalLesson = lessonById(goalId).lesson;
+  const need = new Set([goalId]);
+  for (const id of [...GRAPH.order].reverse()) if (need.has(id)) GRAPH.byId[id].needs.forEach(p => need.add(p));
+  const needDone = [...need].filter(id => S.done[id]).length;
+  const units = `<div class="goal-banner u-${lessonById(goalId).unit.color}"><small>${t("goal_label")}</small><h2>${esc(goalLesson.title)}</h2><p>${esc(goalLesson.blurb)}</p><div class="bar"><i style="width:${needDone / need.size * 100}%"></i></div><span>${t("goal_progress", { done: needDone, total: need.size })}</span></div>${rows}`;
 
   const today = S.daily[dayKey()] || 0, pct = Math.min(1, today / goal()), C = 2 * Math.PI * 35;
   const lv = (S.xp % XP_PER_LEVEL);
@@ -460,7 +467,7 @@ function renderLearn() {
 function popover(f, state) {
   const l = f.lesson, mins = Math.max(3, Math.round(l.steps.length * 1.2));
   const meta = `<div class="meta"><span class="chip">${t("n_steps", { n: l.steps.length })}</span><span class="chip">${t("n_min", { n: mins })}</span><span class="chip">+${lessonXp(l)} XP</span></div>`;
-  if (state === "locked") return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${t("unlock_msg", { title: esc(FLAT[f.i - 1].lesson.title) })}</p></div>`;
+  if (state === "locked") return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${t("unlock_msg", { title: esc(missingPrereqs(l.id).join(", ")) })}</p></div>`;
   return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${esc(l.blurb)}</p>${meta}<button class="btn btn-primary btn-block" data-start="${l.id}">${state === "done" ? t("practice_again") : t("start_lesson")}</button></div>`;
 }
 view.addEventListener("click", e => {
@@ -521,7 +528,7 @@ let L = null; // active lesson state
 
 function openLesson(id) {
   const f = lessonById(id);
-  if (!f || !isUnlocked(f.i)) { location.hash = "#/learn"; return; }
+  if (!f || !isUnlocked(id)) { location.hash = "#/learn"; return; }
   L = { f, lesson: f.lesson, i: 0, replay: !!S.done[id], xp: 0, graded: 0, first: 0, token: 0 };
   mountLesson();
 }
@@ -705,7 +712,7 @@ function renderFinish() {
   if (bonus) hooks.step && hooks.step(`${L.lesson.id}:bonus`, bonus);
   $(".l-progress", lroot).innerHTML = L.lesson.steps.map(() => `<i class="done"></i>`).join("");
   const acc = L.graded ? Math.round(L.first / L.graded * 100) : 100;
-  const nx = FLAT[L.f.i + 1];
+  const nxId = Tiers.nextUp(GRAPH, S.done), nx = nxId && lessonById(nxId);
   $("#l-body").innerHTML = `<div class="l-wrap"><div class="done-screen"><div class="trophy">${mascot("cheer", 150)}</div><h2>${L.replay ? t("practice_complete") : t("lesson_complete")}</h2><p>${esc(L.lesson.title)}${nx && !L.replay ? ` · ${t("next_up", { t: esc(nx.lesson.title) })}` : ""}</p>
     <div class="done-stats"><div class="xp"><small>${t("xp_earned")}</small><b>${ico("bolt","fill")}+${L.xp}</b></div><div class="acc"><small>${t("first_try")}</small><b>${acc}%</b></div><div class="st"><small>${t("streak")}</small><b>${ico("flame","fill")}${currentStreak()}</b></div></div></div></div>`;
   foot(`<span class="grow"></span><button class="btn btn-primary" id="go">${nx ? t("back_to_path") : t("finish")}</button>`);

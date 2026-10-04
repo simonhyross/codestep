@@ -1275,6 +1275,105 @@ print(list(gen))`,
   ]},
   ]
 },
+{
+  id: "project", title: "Build a Program", desc: "Put your skills together in one small project", color: "blue",
+  lessons: [
+  { id: "gradebook", needs: ["comprehensions", "sorting", "twosum"], title: "Project: Gradebook", blurb: "Build a small program from the pieces you know", steps: [
+    { type: "learn", title: "Plan the program", html: py`
+      <p>Real programs are small pieces that fit together. Today you build a <b>gradebook</b>: record scores for students, work out averages and print a ranking.</p>
+      <p>The data is a <b>dict</b> mapping each name to a <b>list</b> of scores. Each piece is a <b>function</b>, and the last one reuses the others:</p>
+      <pre data-run><code>book = {}
+book.setdefault("Ada", []).append(90)
+book.setdefault("Ada", []).append(100)
+book.setdefault("Bo", []).append(70)
+print(book)
+
+averages = [(name, sum(s) / len(s)) for name, s in book.items()]
+print(sorted(averages, key=lambda pair: pair[1], reverse=True))</code></pre>
+      <p>Dicts (lookup), comprehensions (transform) and sorting (order) each did one job here. That is how you break a big task down.</p>` },
+    { type: "code", prompt: py`<p><b>Piece 1.</b> Write <code>add_score(book, name, score)</code>. It appends <code>score</code> to the student's list (creating the list the first time) and changes <code>book</code> in place. Scores must be between 0 and 100, otherwise raise <code>ValueError</code>.</p>`,
+      starter: py`def add_score(book, name, score):
+    pass
+`, solution: py`def add_score(book, name, score):
+    if not 0 <= score <= 100:
+        raise ValueError("score must be between 0 and 100")
+    book.setdefault(name, []).append(score)`, hint: "setdefault(name, []) gives you the list, creating it if it is missing.",
+      tests: py`b = {}
+add_score(b, "Ada", 90)
+add_score(b, "Ada", 100)
+add_score(b, "Bo", 70)
+assert b == {"Ada": [90, 100], "Bo": [70]}
+for bad in (-1, 101):
+    try:
+        add_score(b, "Cy", bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError(f"{bad} should raise ValueError")
+assert "Cy" not in b, "A rejected score must not create the student"` },
+    { type: "code", prompt: py`<p><b>Piece 2.</b> Write <code>average(book, name)</code> returning the student's average rounded to 1 decimal place. Return <code>None</code> if the student is unknown.</p>`,
+      starter: py`def average(book, name):
+    pass
+`, solution: py`def average(book, name):
+    scores = book.get(name)
+    if not scores:
+        return None
+    return round(sum(scores) / len(scores), 1)`, hint: "book.get(name) returns None for a missing key instead of raising an error.",
+      tests: py`b = {"Ada": [90, 100], "Bo": [70, 71, 72, 73]}
+assert average(b, "Ada") == 95.0
+assert average(b, "Bo") == 71.5
+assert average(b, "Zed") is None
+assert average({"Cy": [81, 82, 82]}, "Cy") == 81.7` },
+    { type: "code", prompt: py`<p><b>Piece 3.</b> Write <code>ranking(book)</code> returning a list of <code>(name, average)</code> pairs, best average first. Break ties alphabetically by name. <code>average</code> is already written for you.</p>`,
+      starter: py`def average(book, name):
+    return round(sum(book[name]) / len(book[name]), 1)
+
+
+def ranking(book):
+    pass
+`, solution: py`def average(book, name):
+    return round(sum(book[name]) / len(book[name]), 1)
+
+
+def ranking(book):
+    pairs = [(name, average(book, name)) for name in book]
+    return sorted(pairs, key=lambda p: (-p[1], p[0]))`, hint: "Sort with key=lambda p: (-p[1], p[0]): negative average first, then name.",
+      tests: py`b = {"Bo": [70], "Ada": [90, 100], "Cy": [95], "Di": [70]}
+assert ranking(b) == [("Ada", 95.0), ("Cy", 95.0), ("Bo", 70.0), ("Di", 70.0)]
+assert ranking({}) == []
+b["Bo"].append(0)
+assert ranking(b)[-1] == ("Bo", 35.0)` },
+    { type: "code", prompt: py`<p><b>Piece 4: put it together.</b> Write <code>report(book)</code> returning one string with a line per student, like <code>"1. Ada 95.0"</code>, best first, lines joined by <code>"\n"</code>. An empty gradebook gives <code>"No scores yet"</code>. <code>ranking</code> is already written.</p>`,
+      starter: py`def ranking(book):
+    pairs = [(name, round(sum(s) / len(s), 1)) for name, s in book.items()]
+    return sorted(pairs, key=lambda p: (-p[1], p[0]))
+
+
+def report(book):
+    pass
+`, solution: py`def ranking(book):
+    pairs = [(name, round(sum(s) / len(s), 1)) for name, s in book.items()]
+    return sorted(pairs, key=lambda p: (-p[1], p[0]))
+
+
+def report(book):
+    if not book:
+        return "No scores yet"
+    lines = [f"{i}. {name} {avg}" for i, (name, avg) in enumerate(ranking(book), start=1)]
+    return "\n".join(lines)`, hint: "enumerate(items, start=1) numbers the lines from 1.",
+      tests: py`assert report({}) == "No scores yet"
+assert report({"Bo": [70], "Ada": [90, 100]}) == "1. Ada 95.0\n2. Bo 70.0"
+assert report({"Di": [50], "Cy": [50], "Ev": [60]}) == "1. Ev 60.0\n2. Cy 50.0\n3. Di 50.0"` },
+    { type: "predict", code: py`book = {}
+for name, score in [("Ada", 90), ("Bo", 70), ("Ada", 100)]:
+    book.setdefault(name, []).append(score)
+print(book)
+print(sum(book["Ada"]) / len(book["Ada"]))`,
+      answer: py`{'Ada': [90, 100], 'Bo': [70]}
+95.0` },
+  ]},
+  ]
+},
 ];
 
 window.EXAMPLES = [
