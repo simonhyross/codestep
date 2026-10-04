@@ -284,14 +284,12 @@ async function renderSettings() {
   document.title = t("settings_title") + " · Codestep";
   const S = App.S, ready = Account.phase === "ready" && Account.profile, p = Account.profile || {};
   const themeCur = ready ? (p.theme || "system") : (S.theme || "system");
-  const langCur = ready ? p.language : I18N.lang;
   const goalCur = ready ? p.daily_goal : (S.goal || 50);
   const tzNow = (ready && p.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const tzs = timezones(); if (!tzs.includes(tzNow)) tzs.unshift(tzNow);
 
   const guestBanner = !ready && enabled ? `<div class="set-card banner-card">${mascot("happy", 70)}<div><h3>${t("guest_banner_title")}</h3><p>${t("guest_banner_text")}</p><div class="btns"><a class="btn btn-primary btn-sm" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost btn-sm" href="#/auth/signin">${t("sign_in")}</a></div></div></div>` : "";
   const prefs = `<section class="set-card"><h3>${t("sec_prefs")}</h3>
-    ${row(t("language"), t("language_note"), `<select class="select" id="s-lang">${I18N.LANGS.map(l => opt(l, I18N.NAMES[l], langCur)).join("")}</select>`)}
     ${row(t("theme"), "", `<div class="seg" id="s-theme">${["system", "light", "dark"].map(v => `<button data-v="${v}" class="${v === themeCur ? "on" : ""}">${t("theme_" + v)}</button>`).join("")}</div>`)}
     ${row(t("goal_label"), "", `<select class="select" id="s-goal">${[20, 50, 100, 150].map(n => opt(n, t("goal_xp", { n }), goalCur)).join("")}</select>`)}
     ${ready ? row(t("show_lb"), t("show_lb_note"), toggle("s-lb", p.show_on_leaderboard)) : ""}</section>`;
@@ -328,7 +326,6 @@ async function renderSettings() {
   const root = view;
 
   /* preferences */
-  $("#s-lang", root).onchange = async e => { const l = e.target.value; if (ready) await save({ language: l }, { quiet: true }); App.setLanguage(l); };
   $$("#s-theme button", root).forEach(b => (b.onclick = async () => { const v = b.dataset.v; App.S.theme = v === "system" ? null : v; App.save(); App.applyTheme(); if (ready) await save({ theme: v }, { quiet: true }); $$("#s-theme button", root).forEach(x => x.classList.toggle("on", x === b)); }));
   $("#s-goal", root).onchange = async e => { const n = +e.target.value; App.setGoal(n); if (ready) await save({ daily_goal: n }); else toast(t("saved")); };
   const flip = (id, fn) => { const el = $(id, root); if (!el) return; el.onclick = async () => { const on = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", on); await fn(on); }; };

@@ -13,7 +13,7 @@ The first course is Python (24 lessons: basics, collections, data structures, al
 - **Real coding.** You write code, it runs in your browser (Pyodide in a Web Worker, runaway loops are stopped) and is graded by hidden tests,
   with a built-in linter for style and common mistakes.
 - Duolingo-style path with XP, streaks and a daily goal, a playground with timing and memory profiling, light and dark mode,
-  and an interface in English, Spanish, German, French and Swedish (lessons stay in English).
+  and an English-only interface.
 
 ## Accounts, leaderboards and settings (optional)
 
@@ -43,7 +43,7 @@ It needs an internet connection on first load (Pyodide, CodeMirror and fonts com
 | `tiers.js` | Turns each lesson's `needs` into path rows (pure functions) |
 | `app.js` | UI, routing, lessons, reviews, progress, worker management |
 | `account.js` / `backend.js` / `config.js` | Sign-in, settings, leaderboard, sync; Supabase adapter plus a localhost-only demo backend; public project settings |
-| `i18n.js` | Interface translations |
+| `i18n.js` | Interface strings (English only) |
 | `styles.css` | Design system (dark and light themes) |
 | `supabase/` | SQL schema with row level security, email functions, auth config and tests |
 | `tests/` | Curriculum, tracer and scheduler tests |

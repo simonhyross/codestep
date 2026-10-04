@@ -51,7 +51,7 @@ const ICONS = {
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
 };
 const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;
-const LESSON_ICON = { gradebook: "star",  hello: "sparkle", numbers: "hash", decisions: "branch", loops: "repeat", functions: "braces", lists: "list", dicts: "key", comprehensions: "bolt", stacks: "layers", queues: "queue", linked: "link", hashing: "grid", trees: "tree", linear: "search", binary: "target", sorting: "bars", merge: "merge", recursion: "refresh", graphs: "network", bigo: "trend", spot: "timer", twosum: "scale", memo: "database", space: "chip" };
+const LESSON_ICON = { gradebook: "star", tipcalc: "scale", fizz: "repeat", guess: "target", contacts: "key", wordfreq: "bars", history: "layers", printq: "queue", autocomplete: "search", bank: "lock", csvreport: "grid", loganalyzer: "timer", timer: "bolt", coins: "database", subsets: "refresh", regex: "search", json: "braces", itertools: "link", decorators: "sparkle", dataclasses: "chip", twopointers: "merge", window: "eye", dp: "trend", backtrack: "tree", strings: "bulb", tuples: "layers", errors: "bolt", modules: "grid", funcdepth: "braces", classes: "chip", dunder: "star", inherit: "tree", encap: "lock", testing: "check",  hello: "sparkle", numbers: "hash", decisions: "branch", loops: "repeat", functions: "braces", lists: "list", dicts: "key", comprehensions: "bolt", stacks: "layers", queues: "queue", linked: "link", hashing: "grid", trees: "tree", linear: "search", binary: "target", sorting: "bars", merge: "merge", recursion: "refresh", graphs: "network", bigo: "trend", spot: "timer", twosum: "scale", memo: "database", space: "chip" };
 const DECO = [
   '<circle cx="72" cy="28" r="34"/><circle cx="26" cy="82" r="15"/>',
   '<path d="M40 0h14L14 100H0zM70 0h14L44 100H30zM100 0h14L74 100H60z"/>',
@@ -423,31 +423,45 @@ function bigoWidget(el) {
 const initWidgets = root => $$("[data-widget=bigo]", root).forEach(bigoWidget);
 
 /* ============================================================ learn view */
-let openNode = null;
+let openNode = null, levelFilter = 0;                              // 0 = all, 1-4 = one difficulty, 5 = mini-projects only
+const LEVELS = [null, "Beginner", "Intermediate", "Advanced", "Expert"];
+const lvlOf = l => l.level || 1;
+const isProject = l => l.kind === "project";
+const matchesFilter = l => !levelFilter || (levelFilter === 5 ? isProject(l) : lvlOf(l) === levelFilter);
+const pips = n => `<span class="pips" title="${LEVELS[n]}" aria-label="${LEVELS[n]}">${[1, 2, 3, 4].map(i => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
 const view = $("#view");
 const stats = () => `<div class="stat fire" title="${esc(t("streak"))}">${ico("flame", "fill")}<b>${currentStreak()}</b></div><div class="stat xp" title="${esc(t("total_xp"))}">${ico("bolt", "fill")}<b>${S.xp}</b></div><div class="stat lvl" title="${levelName()}">${ico("star", "fill")}<b>${level()}</b></div>`;
 
 function renderLearn() {
   const cur = currentLesson();
-  const dx = [0, 46, 74, 46, 0, -46, -74, -46];
-  const rows = GRAPH.rows.map((ids, r) => {
-    const nodes = ids.map(id => {
-      const f = lessonById(id), l = f.lesson;
-      const state = S.done[id] ? "done" : !isUnlocked(id) ? "locked" : (cur && cur.lesson.id === id ? "current" : "open");
-      return `<div class="node-wrap u-${f.unit.color}">
-        ${state === "current" && openNode !== id ? `<span class="start-tag">${t("start")}</span>` : ""}
-        <button class="node ${state}" data-node="${id}" aria-label="${esc(l.title)} (${state})">${ico(state === "locked" ? "lock" : LESSON_ICON[id] || "sparkle")}${state === "done" ? `<span class="badge">${ico("check")}</span>` : ""}</button>
-        <span class="node-label">${esc(l.title)}</span></div>`;
-    }).join("");
-    const open = ids.find(id => id === openNode);
-    const head = ids.length > 1 ? t("tier_any", { n: ids.length }) : t("tier_one");
-    return `<section class="tier"><div class="tier-head"><small>${t("tier_n", { n: r + 1 })}</small><span>${head}</span></div><div class="tier-nodes">${nodes}</div>${open ? popover(lessonById(open), S.done[open] ? "done" : !isUnlocked(open) ? "locked" : "open") : ""}</section>`;
-  }).join("");
   const goalId = GRAPH.order[GRAPH.order.length - 1], goalLesson = lessonById(goalId).lesson;
   const need = new Set([goalId]);
   for (const id of [...GRAPH.order].reverse()) if (need.has(id)) GRAPH.byId[id].needs.forEach(p => need.add(p));
   const needDone = [...need].filter(id => S.done[id]).length;
-  const units = `<div class="goal-banner u-${lessonById(goalId).unit.color}"><small>${t("goal_label")}</small><h2>${esc(goalLesson.title)}</h2><p>${esc(goalLesson.blurb)}</p><div class="bar"><i style="width:${needDone / need.size * 100}%"></i></div><span>${t("goal_progress", { done: needDone, total: need.size })}</span></div>${rows}`;
+  const stateOf = id => S.done[id] ? "done" : !isUnlocked(id) ? "locked" : (cur && cur.lesson.id === id ? "current" : "open");
+  const card = id => {
+    const f = lessonById(id), l = f.lesson, state = stateOf(id), miss = state === "locked" ? missingPrereqs(id) : [];
+    const sub = state === "locked" ? t("needs_x", { title: esc(miss[0]) + (miss.length > 1 ? ` +${miss.length - 1}` : "") })
+      : state === "done" ? t("done_lbl") : isProject(l) ? t("mini_project") : t("n_steps", { n: l.steps.length });
+    return `<button class="lcard ${state}${isProject(l) ? " proj" : ""}${matchesFilter(l) ? "" : " dim"}${openNode === id ? " sel" : ""}" data-node="${id}" aria-label="${esc(l.title)} (${state})">
+      <span class="lc-ico">${state === "done" ? ico("check") : state === "locked" ? ico("lock") : ico(LESSON_ICON[id] || "sparkle")}</span>
+      <span class="lc-body"><b>${esc(l.title)}</b><small>${sub}</small></span>
+      <span class="lc-lvl">${pips(lvlOf(l))}</span>
+      ${isProject(l) ? `<span class="lc-proj">${t("project_badge")}</span>` : ""}${state === "current" ? `<span class="lc-next">${t("start")}</span>` : ""}</button>`;
+  };
+  const sections = UNITS.map(u => {
+    const ids = u.lessons.map(l => l.id).sort((x, y) => GRAPH.rowOf[x] - GRAPH.rowOf[y] || GRAPH.order.indexOf(x) - GRAPH.order.indexOf(y));
+    const stages = [];                                              // lessons that share a path row form one stage (any order)
+    ids.forEach(id => { const st = stages[stages.length - 1]; (st && GRAPH.rowOf[st[0]] === GRAPH.rowOf[id] ? st : stages[stages.push([]) - 1]).push(id); });
+    const done = ids.filter(id => S.done[id]).length, open = ids.find(id => id === openNode);
+    return `<section class="field u-${u.color}" title="${esc(u.desc)}"><header class="field-head"><i class="fdot"></i><h2>${esc(u.title)}</h2><span class="fcount">${done}/${ids.length}</span></header>
+      <ol class="stages">${stages.map((st, i) => `<li class="stage${st.every(id => S.done[id]) ? " done" : ""}"><span class="snum">${st.every(id => S.done[id]) ? ico("check") : i + 1}</span>
+        <div>${st.length > 1 ? `<small class="anyorder">${t("any_order")}</small>` : ""}<div class="lgrid">${st.map(card).join("")}</div>${st.includes(open) ? popover(lessonById(open), S.done[open] ? "done" : !isUnlocked(open) ? "locked" : "open") : ""}</div></li>`).join("")}</ol></section>`;
+  }).join("");
+  const nx = cur && cur.lesson;
+  const upnext = nx ? `<div class="upnext u-${cur.unit.color}"><span class="lc-ico">${ico(LESSON_ICON[nx.id] || "sparkle")}</span><div><small>${t("up_next")}</small><b>${esc(nx.title)}</b></div><button class="btn btn-primary" data-start="${nx.id}">${t("start_lesson")}</button></div>` : "";
+  const units = `${upnext}<div class="path-tools"><span class="goalline">${t("path_goal")}: <b>${esc(goalLesson.title)}</b> · ${t("goal_progress", { done: needDone, total: need.size })}</span>
+    <select class="select" id="lvl-sel" aria-label="${esc(t("filter_level"))}">${[[0, t("all_levels")], ...[1, 2, 3, 4].map(n => [n, LEVELS[n]]), [5, t("mini_projects")]].map(([n, label]) => `<option value="${n}"${levelFilter === n ? " selected" : ""}>${esc(label)}</option>`).join("")}</select></div>${sections}`;
 
   const today = S.daily[dayKey()] || 0, pct = Math.min(1, today / goal()), C = 2 * Math.PI * 35;
   const lv = (S.xp % XP_PER_LEVEL);
@@ -462,18 +476,28 @@ function renderLearn() {
       <p><strong>${pct >= 1 ? t("goal_reached") : t("xp_to_go", { n: goal() - today })}</strong>${t("goal_text", { n: goal() })}</p></div></div>
     <div class="card"><h3>${t("level")}</h3><div class="lvl-top"><b>${t("level_line", { n: level(), name: levelName() })}</b><span>${lv}/${XP_PER_LEVEL} XP</span></div><div class="lvl-bar"><i style="width:${lv}%"></i></div><span class="chip">${t("lessons_done", { done: doneCount, total: FLAT.length })}</span></div>
     <div class="card"><h3>${t("this_week")}</h3><div class="week">${week.map(d => `<div class="${d.on ? "on" : ""} ${d.today ? "today" : ""}"><i>${d.on ? ico("flame", "fill") : ""}</i>${d.l}</div>`).join("")}</div></div>`;
-  view.innerHTML = `<div class="topbar"><h1>${t("path_title")}</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet">${greeting}${rev}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
+  view.innerHTML = `<div class="topbar"><h1>${t("path_title")}</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet">${rev}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
 }
 function popover(f, state) {
   const l = f.lesson, mins = Math.max(3, Math.round(l.steps.length * 1.2));
-  const meta = `<div class="meta"><span class="chip">${t("n_steps", { n: l.steps.length })}</span><span class="chip">${t("n_min", { n: mins })}</span><span class="chip">+${lessonXp(l)} XP</span></div>`;
-  if (state === "locked") return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${t("unlock_msg", { title: esc(missingPrereqs(l.id).join(", ")) })}</p></div>`;
-  return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${esc(l.blurb)}</p>${meta}<button class="btn btn-primary btn-block" data-start="${l.id}">${state === "done" ? t("practice_again") : t("start_lesson")}</button></div>`;
+  const count = type => l.steps.filter(x => x.type === type).length;
+  const topics = l.steps.filter(x => x.type === "learn").map(x => x.title).slice(0, 4);
+  const mix = [[count("code"), "exercise"], [count("quiz") + count("predict"), "question"]].filter(([n]) => n).map(([n, w]) => `${n} ${w}${n > 1 ? "s" : ""}`).join(" · ");
+  const head = `<button class="pop-x" data-close aria-label="${esc(t("close"))}">${ico("x")}</button><small class="pop-kicker">${esc(f.unit.title)} · ${pips(lvlOf(l))}${LEVELS[lvlOf(l)]}${isProject(l) ? ` · ${t("mini_project")}` : ""}</small><h3>${esc(l.title)}</h3><p>${esc(l.blurb)}</p>`;
+  if (state === "locked") return `<div class="node-pop locked">${head}<p class="pop-lock">${ico("lock")}<span>${t("unlock_msg", { title: `<b>${esc(missingPrereqs(l.id).join(", "))}</b>` })}</span></p></div>`;
+  return `<div class="node-pop">${head}${topics.length ? `<div class="pop-learn"><b>${t("youll_learn")}</b><ul>${topics.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    <div class="pop-foot"><span>${mix} · ${t("n_min", { n: mins })} · +${lessonXp(l)} XP</span><button class="btn btn-primary" data-start="${l.id}">${state === "done" ? t("practice_again") : t("start_lesson")} ${ico("next")}</button></div></div>`;
 }
+view.addEventListener("change", e => { if (e.target.id === "lvl-sel") { levelFilter = +e.target.value; renderLearn(); } });
 view.addEventListener("click", e => {
+  if (e.target.closest("[data-close]")) { openNode = null; renderLearn(); return; }
   const st = e.target.closest("[data-start]"); if (st) { location.hash = "#/lesson/" + st.dataset.start; return; }
   const nd = e.target.closest("[data-node]");
-  if (nd) { const id = nd.dataset.node; openNode = openNode === id ? null : id; renderLearn(); }
+  if (nd) {
+    const id = nd.dataset.node;
+    openNode = openNode === id ? null : id; renderLearn();
+    const pop = view.querySelector(".node-pop"); if (pop) pop.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
 });
 
 /* ============================================================ playground */

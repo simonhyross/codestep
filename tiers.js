@@ -3,7 +3,7 @@
 (() => {
 function build(units) {
   const byId = {}, order = [];
-  units.forEach((u, unit) => u.lessons.forEach(l => { byId[l.id] = { id: l.id, unit, needs: l.needs || [] }; order.push(l.id); }));
+  units.forEach((u, unit) => u.lessons.forEach(l => { byId[l.id] = { id: l.id, unit, needs: l.needs || [], project: l.kind === "project" }; order.push(l.id); }));
   for (const n of Object.values(byId)) for (const p of n.needs) if (!byId[p]) throw new Error(`${n.id} needs unknown lesson ${p}`);
 
   const row = {}, state = {};
@@ -25,8 +25,12 @@ function build(units) {
 /** A lesson is open once everything it builds on is done. */
 const isUnlocked = (g, id, done) => g.byId[id].needs.every(p => done[p]);
 
-/** The lesson to suggest: the first open, unfinished one in curriculum order. */
-const nextUp = (g, done) => g.order.find(id => !done[id] && isUnlocked(g, id, done)) || null;
+/** The lesson to suggest: the first open, unfinished one in curriculum order. Mini-projects are optional practice,
+    so they are only suggested once no regular lesson is open. */
+const nextUp = (g, done) => {
+  const open = g.order.filter(id => !done[id] && isUnlocked(g, id, done));
+  return open.find(id => !g.byId[id].project) || open[0] || null;
+};
 
 window.Tiers = { build, isUnlocked, nextUp };
 })();
