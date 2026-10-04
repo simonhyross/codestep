@@ -2,6 +2,11 @@
    Missing keys fall back to English. Lists are "|" separated. {name} placeholders are interpolated. */
 (() => {
 const en = {
+  map_title: "Your map", map_explore: "Explore", map_goal: "Goal", map_fit: "Fit to screen", map_zoom_in: "Zoom in", map_zoom_out: "Zoom out", map_hint: "Drag to explore · scroll or pinch to zoom",
+  st_strong: "Strong", st_learning: "Learning", st_fading: "Fading", st_ready: "Ready to start", st_fog: "Fog",
+  st_strong_note: "Remembered well. It will come back for review in a while.", st_learning_note: "You've done this. Reviews will make it stick.", st_ready_note: "Everything it builds on is done.", st_fog_note: "Better to do other skills first, but you can peek.",
+  map_revive: "Revive (quick review)", map_peek: "Peek anyway", map_set_goal: "Set as goal", map_clear_goal: "Clear goal", map_needs: "Better first:", map_goal_left_one: "{n} skill to go", map_goal_left_other: "{n} skills to go", map_goal_done: "Goal reached!", map_next: "Next: {name}",
+  q_learn: "Learn", q_quiz: "Quiz", q_predict: "Predict", q_code: "Code",
   review_upcoming: "Coming up", review_today_short: "Today",
   viz_title: "Watch it run", viz_tracing: "Tracing your code…", viz_step: "Step {n} of {total}", viz_frames: "Frames", viz_objects: "Objects", viz_output: "Output", viz_global: "Global frame",
   viz_play: "Play", viz_pause: "Pause", viz_prev: "Previous step", viz_next: "Next step", viz_first: "First step", viz_last: "Last step", viz_speed: "Speed",
@@ -15,9 +20,9 @@ const en = {
   err_username: "That username isn't available.", err_cooldown: "You can change your username once every 7 days.",
   nav_learn: "Learn", nav_playground: "Playground", nav_leaderboard: "Leaderboard", nav_profile: "Profile",
   sign_in: "Sign in", sign_out: "Sign out", create_account: "Create account", guest: "Guest",
-  path_title: "Your learning path", streak: "Day streak", total_xp: "Total XP", level: "Level", xp: "XP",
-  start: "START", start_lesson: "Start lesson", practice_again: "Practice again", unlock_msg: "Finish “{title}” to unlock this lesson.",
-  n_steps: "{n} steps", n_min: "~{n} min", unit_n: "Unit {n}",
+  streak: "Day streak", total_xp: "Total XP", level: "Level", xp: "XP",
+  start: "START", start_lesson: "Start lesson", practice_again: "Practice again", 
+  
   daily_goal: "Daily goal", goal_reached: "Goal reached!", xp_to_go: "{n} XP to go", goal_text: "Earn {n} XP every day to keep your streak alive.",
   level_line: "Level {n} · {name}", lessons_done: "{done} / {total} lessons complete", this_week: "This week", weekdays: "SMTWTFS",
   level_names: "Hatchling|Scripter|Coder|Debugger|Hacker|Architect|Wizard|Guru|Legend",
@@ -33,7 +38,7 @@ const en = {
   has_error: "Your code has an error. See the output panel.", not_right: "Not quite right yet.",
   quit_title: "Quit this lesson?", quit_text: "Your progress in this lesson will be lost.", keep_going: "Keep going", quit: "Quit",
   sol_loaded: "Solution loaded. Read it, then press Check.", lesson_complete: "Lesson complete!", practice_complete: "Practice complete!", next_up: "Next up: {t}",
-  xp_earned: "XP earned", first_try: "First-try", back_to_path: "Back to path", finish: "Finish",
+  xp_earned: "XP earned", first_try: "First-try", back_to_path: "Back to map", finish: "Finish",
   playground: "Playground", examples: "Examples…", copy: "Copy", clear: "Clear", run_profile: "Run + Profile", run_profile_tip: "Run and measure time and peak memory",
   copied: "Copied to clipboard", copy_fail: "Couldn't copy", no_problems: "No problems", n_errors_one: "{n} error", n_errors_other: "{n} errors",
   n_sugg_one: "{n} suggestion", n_sugg_other: "{n} suggestions", ln_col: "Ln {l}, Col {c}",
@@ -83,7 +88,7 @@ const en = {
   export_data: "Download my data", export_note: "A JSON file with your profile and progress.",
   delete_account: "Delete account", delete_note: "Permanently deletes your account, progress and leaderboard entries. This can't be undone.",
   delete_confirm_title: "Delete your account?", delete_confirm_text: "Type your username ({u}) to confirm.", deleted_toast: "Your account was deleted.",
-  unlock_all: "Unlock all lessons", unlock_all_note: "Jump to any lesson without finishing the previous ones.",
+  
   reset_progress: "Reset progress", reset_note: "Erase XP, streak and completed lessons on this device.", reset_confirm: "Reset all progress?", cant_undo: "This can't be undone.", progress_reset: "Progress reset",
   guest_banner_title: "You're learning as a guest", guest_banner_text: "Create a free account to save your progress, join the leaderboard and get practice reminders.",
   member_since: "Member since {d}",
@@ -95,6 +100,11 @@ const en = {
 };
 
 const es = {
+  map_title: "Tu mapa", map_explore: "Explorar", map_goal: "Meta", map_fit: "Ajustar a la pantalla", map_zoom_in: "Acercar", map_zoom_out: "Alejar", map_hint: "Arrastra para explorar · rueda o pellizco para el zoom",
+  st_strong: "Fuerte", st_learning: "Aprendiendo", st_fading: "Se desvanece", st_ready: "Listo para empezar", st_fog: "Niebla",
+  st_strong_note: "Bien recordado. Volverá a repasarse más adelante.", st_learning_note: "Ya lo hiciste. Los repasos lo fijarán.", st_ready_note: "Todo lo que necesita ya está hecho.", st_fog_note: "Mejor haz otras habilidades antes, pero puedes echar un vistazo.",
+  map_revive: "Revivir (repaso rápido)", map_peek: "Echar un vistazo", map_set_goal: "Fijar como meta", map_clear_goal: "Quitar meta", map_needs: "Mejor antes:", map_goal_left_one: "Falta {n} habilidad", map_goal_left_other: "Faltan {n} habilidades", map_goal_done: "¡Meta lograda!", map_next: "Siguiente: {name}",
+  q_learn: "Aprender", q_quiz: "Pregunta", q_predict: "Predecir", q_code: "Código",
   review_upcoming: "Próximos días", review_today_short: "Hoy",
   viz_title: "Míralo ejecutarse", viz_tracing: "Rastreando tu código…", viz_step: "Paso {n} de {total}", viz_frames: "Marcos", viz_objects: "Objetos", viz_output: "Salida", viz_global: "Marco global",
   viz_play: "Reproducir", viz_pause: "Pausar", viz_prev: "Paso anterior", viz_next: "Paso siguiente", viz_first: "Primer paso", viz_last: "Último paso", viz_speed: "Velocidad",
@@ -108,9 +118,9 @@ const es = {
   err_username: "Ese nombre de usuario no está disponible.", err_cooldown: "Puedes cambiar tu nombre de usuario una vez cada 7 días.",
   nav_learn: "Aprender", nav_playground: "Laboratorio", nav_leaderboard: "Clasificación", nav_profile: "Perfil",
   sign_in: "Iniciar sesión", sign_out: "Cerrar sesión", create_account: "Crear cuenta", guest: "Invitado",
-  path_title: "Tu ruta de aprendizaje", streak: "Racha de días", total_xp: "XP total", level: "Nivel", xp: "XP",
-  start: "EMPEZAR", start_lesson: "Empezar lección", practice_again: "Practicar de nuevo", unlock_msg: "Termina «{title}» para desbloquear esta lección.",
-  n_steps: "{n} pasos", n_min: "~{n} min", unit_n: "Unidad {n}",
+  streak: "Racha de días", total_xp: "XP total", level: "Nivel", xp: "XP",
+  start: "EMPEZAR", start_lesson: "Empezar lección", practice_again: "Practicar de nuevo", 
+  
   daily_goal: "Meta diaria", goal_reached: "¡Meta lograda!", xp_to_go: "Faltan {n} XP", goal_text: "Gana {n} XP cada día para mantener tu racha.",
   level_line: "Nivel {n} · {name}", lessons_done: "{done} / {total} lecciones completadas", this_week: "Esta semana", weekdays: "DLMXJVS",
   level_names: "Polluelo|Programador|Codificador|Depurador|Hacker|Arquitecto|Mago|Gurú|Leyenda",
@@ -126,7 +136,7 @@ const es = {
   has_error: "Tu código tiene un error. Mira el panel de salida.", not_right: "Todavía no es correcto.",
   quit_title: "¿Salir de la lección?", quit_text: "Perderás el progreso de esta lección.", keep_going: "Seguir", quit: "Salir",
   sol_loaded: "Solución cargada. Léela y pulsa Comprobar.", lesson_complete: "¡Lección completada!", practice_complete: "¡Práctica completada!", next_up: "Siguiente: {t}",
-  xp_earned: "XP ganados", first_try: "A la primera", back_to_path: "Volver a la ruta", finish: "Terminar",
+  xp_earned: "XP ganados", first_try: "A la primera", back_to_path: "Volver al mapa", finish: "Terminar",
   playground: "Laboratorio", examples: "Ejemplos…", copy: "Copiar", clear: "Borrar", run_profile: "Ejecutar + Perfil", run_profile_tip: "Ejecuta y mide el tiempo y la memoria máxima",
   copied: "Copiado al portapapeles", copy_fail: "No se pudo copiar", no_problems: "Sin problemas", n_errors_one: "{n} error", n_errors_other: "{n} errores",
   n_sugg_one: "{n} sugerencia", n_sugg_other: "{n} sugerencias", ln_col: "Ln {l}, Col {c}",
@@ -174,7 +184,7 @@ const es = {
   export_data: "Descargar mis datos", export_note: "Un archivo JSON con tu perfil y tu progreso.",
   delete_account: "Eliminar cuenta", delete_note: "Elimina para siempre tu cuenta, tu progreso y tus entradas en la clasificación. No se puede deshacer.",
   delete_confirm_title: "¿Eliminar tu cuenta?", delete_confirm_text: "Escribe tu nombre de usuario ({u}) para confirmar.", deleted_toast: "Tu cuenta fue eliminada.",
-  unlock_all: "Desbloquear todas las lecciones", unlock_all_note: "Ve a cualquier lección sin terminar las anteriores.",
+  
   reset_progress: "Restablecer progreso", reset_note: "Borra XP, racha y lecciones completadas en este dispositivo.", reset_confirm: "¿Restablecer todo el progreso?", cant_undo: "No se puede deshacer.", progress_reset: "Progreso restablecido",
   guest_banner_title: "Estás aprendiendo como invitado", guest_banner_text: "Crea una cuenta gratis para guardar tu progreso, entrar en la clasificación y recibir recordatorios.",
   member_since: "Miembro desde {d}",
@@ -185,6 +195,11 @@ const es = {
 };
 
 const de = {
+  map_title: "Deine Karte", map_explore: "Erkunden", map_goal: "Ziel", map_fit: "An Bildschirm anpassen", map_zoom_in: "Vergrößern", map_zoom_out: "Verkleinern", map_hint: "Ziehen zum Erkunden · Scrollen oder Zwicken zum Zoomen",
+  st_strong: "Stark", st_learning: "Lernend", st_fading: "Verblasst", st_ready: "Bereit zum Start", st_fog: "Nebel",
+  st_strong_note: "Gut gemerkt. Kommt später zur Wiederholung zurück.", st_learning_note: "Das hast du gemacht. Wiederholungen festigen es.", st_ready_note: "Alles, worauf es aufbaut, ist erledigt.", st_fog_note: "Besser erst andere Fähigkeiten, aber du darfst reinschauen.",
+  map_revive: "Auffrischen (kurze Wiederholung)", map_peek: "Trotzdem reinschauen", map_set_goal: "Als Ziel setzen", map_clear_goal: "Ziel entfernen", map_needs: "Besser vorher:", map_goal_left_one: "Noch {n} Fähigkeit", map_goal_left_other: "Noch {n} Fähigkeiten", map_goal_done: "Ziel erreicht!", map_next: "Weiter: {name}",
+  q_learn: "Lernen", q_quiz: "Quiz", q_predict: "Vorhersage", q_code: "Code",
   review_upcoming: "Demnächst", review_today_short: "Heute",
   viz_title: "Beim Ausführen zusehen", viz_tracing: "Dein Code wird verfolgt…", viz_step: "Schritt {n} von {total}", viz_frames: "Frames", viz_objects: "Objekte", viz_output: "Ausgabe", viz_global: "Globaler Frame",
   viz_play: "Abspielen", viz_pause: "Pause", viz_prev: "Vorheriger Schritt", viz_next: "Nächster Schritt", viz_first: "Erster Schritt", viz_last: "Letzter Schritt", viz_speed: "Tempo",
@@ -198,9 +213,9 @@ const de = {
   err_username: "Dieser Benutzername ist nicht verfügbar.", err_cooldown: "Du kannst deinen Benutzernamen einmal alle 7 Tage ändern.",
   nav_learn: "Lernen", nav_playground: "Spielwiese", nav_leaderboard: "Rangliste", nav_profile: "Profil",
   sign_in: "Anmelden", sign_out: "Abmelden", create_account: "Konto erstellen", guest: "Gast",
-  path_title: "Dein Lernpfad", streak: "Tage in Folge", total_xp: "Gesamt-XP", level: "Level", xp: "XP",
-  start: "START", start_lesson: "Lektion starten", practice_again: "Nochmal üben", unlock_msg: "Schließe „{title}“ ab, um diese Lektion freizuschalten.",
-  n_steps: "{n} Schritte", n_min: "~{n} Min.", unit_n: "Einheit {n}",
+  streak: "Tage in Folge", total_xp: "Gesamt-XP", level: "Level", xp: "XP",
+  start: "START", start_lesson: "Lektion starten", practice_again: "Nochmal üben", 
+  
   daily_goal: "Tagesziel", goal_reached: "Ziel erreicht!", xp_to_go: "Noch {n} XP", goal_text: "Sammle jeden Tag {n} XP, um deine Serie zu halten.",
   level_line: "Level {n} · {name}", lessons_done: "{done} / {total} Lektionen abgeschlossen", this_week: "Diese Woche", weekdays: "SMDMDFS",
   level_names: "Küken|Skripter|Coder|Debugger|Hacker|Architekt|Zauberer|Guru|Legende",
@@ -216,7 +231,7 @@ const de = {
   has_error: "Dein Code hat einen Fehler. Siehe Ausgabe.", not_right: "Noch nicht ganz richtig.",
   quit_title: "Lektion beenden?", quit_text: "Dein Fortschritt in dieser Lektion geht verloren.", keep_going: "Weitermachen", quit: "Beenden",
   sol_loaded: "Lösung geladen. Lies sie und drücke dann Prüfen.", lesson_complete: "Lektion abgeschlossen!", practice_complete: "Übung abgeschlossen!", next_up: "Als Nächstes: {t}",
-  xp_earned: "XP verdient", first_try: "Beim 1. Versuch", back_to_path: "Zurück zum Pfad", finish: "Fertig",
+  xp_earned: "XP verdient", first_try: "Beim 1. Versuch", back_to_path: "Zurück zur Karte", finish: "Fertig",
   playground: "Spielwiese", examples: "Beispiele…", copy: "Kopieren", clear: "Leeren", run_profile: "Ausführen + Profil", run_profile_tip: "Ausführen und Zeit sowie Spitzenspeicher messen",
   copied: "In die Zwischenablage kopiert", copy_fail: "Kopieren nicht möglich", no_problems: "Keine Probleme", n_errors_one: "{n} Fehler", n_errors_other: "{n} Fehler",
   n_sugg_one: "{n} Vorschlag", n_sugg_other: "{n} Vorschläge", ln_col: "Z {l}, Sp {c}",
@@ -264,7 +279,7 @@ const de = {
   export_data: "Meine Daten herunterladen", export_note: "Eine JSON-Datei mit deinem Profil und Fortschritt.",
   delete_account: "Konto löschen", delete_note: "Löscht dein Konto, deinen Fortschritt und Ranglisteneinträge dauerhaft. Das lässt sich nicht rückgängig machen.",
   delete_confirm_title: "Konto löschen?", delete_confirm_text: "Gib zur Bestätigung deinen Benutzernamen ({u}) ein.", deleted_toast: "Dein Konto wurde gelöscht.",
-  unlock_all: "Alle Lektionen freischalten", unlock_all_note: "Springe zu jeder Lektion, ohne die vorherigen abzuschließen.",
+  
   reset_progress: "Fortschritt zurücksetzen", reset_note: "Löscht XP, Serie und abgeschlossene Lektionen auf diesem Gerät.", reset_confirm: "Gesamten Fortschritt zurücksetzen?", cant_undo: "Das lässt sich nicht rückgängig machen.", progress_reset: "Fortschritt zurückgesetzt",
   guest_banner_title: "Du lernst als Gast", guest_banner_text: "Erstelle ein kostenloses Konto, um Fortschritt zu speichern, in der Rangliste mitzumachen und Erinnerungen zu erhalten.",
   member_since: "Mitglied seit {d}",
@@ -275,6 +290,11 @@ const de = {
 };
 
 const fr = {
+  map_title: "Ta carte", map_explore: "Explorer", map_goal: "Objectif", map_fit: "Ajuster à l'écran", map_zoom_in: "Zoom avant", map_zoom_out: "Zoom arrière", map_hint: "Glisse pour explorer · molette ou pincement pour zoomer",
+  st_strong: "Solide", st_learning: "En cours", st_fading: "S'efface", st_ready: "Prêt à commencer", st_fog: "Brouillard",
+  st_strong_note: "Bien retenu. Il reviendra en révision plus tard.", st_learning_note: "Tu l'as fait. Les révisions le fixeront.", st_ready_note: "Tout ce dont il a besoin est fait.", st_fog_note: "Mieux vaut d'abord d'autres compétences, mais tu peux jeter un œil.",
+  map_revive: "Raviver (révision rapide)", map_peek: "Jeter un œil", map_set_goal: "En faire un objectif", map_clear_goal: "Retirer l'objectif", map_needs: "Mieux avant :", map_goal_left_one: "Encore {n} compétence", map_goal_left_other: "Encore {n} compétences", map_goal_done: "Objectif atteint !", map_next: "Suivant : {name}",
+  q_learn: "Apprendre", q_quiz: "Quiz", q_predict: "Prédire", q_code: "Code",
   review_upcoming: "À venir", review_today_short: "Auj.",
   viz_title: "Regarde-le s'exécuter", viz_tracing: "Suivi de ton code…", viz_step: "Étape {n} sur {total}", viz_frames: "Cadres", viz_objects: "Objets", viz_output: "Sortie", viz_global: "Cadre global",
   viz_play: "Lecture", viz_pause: "Pause", viz_prev: "Étape précédente", viz_next: "Étape suivante", viz_first: "Première étape", viz_last: "Dernière étape", viz_speed: "Vitesse",
@@ -288,9 +308,9 @@ const fr = {
   err_username: "Ce nom d'utilisateur n'est pas disponible.", err_cooldown: "Tu peux changer ton nom d'utilisateur une fois tous les 7 jours.",
   nav_learn: "Apprendre", nav_playground: "Bac à sable", nav_leaderboard: "Classement", nav_profile: "Profil",
   sign_in: "Se connecter", sign_out: "Se déconnecter", create_account: "Créer un compte", guest: "Invité",
-  path_title: "Ton parcours", streak: "Jours d'affilée", total_xp: "XP total", level: "Niveau", xp: "XP",
-  start: "DÉMARRER", start_lesson: "Commencer la leçon", practice_again: "S'entraîner encore", unlock_msg: "Termine « {title} » pour débloquer cette leçon.",
-  n_steps: "{n} étapes", n_min: "~{n} min", unit_n: "Unité {n}",
+  streak: "Jours d'affilée", total_xp: "XP total", level: "Niveau", xp: "XP",
+  start: "DÉMARRER", start_lesson: "Commencer la leçon", practice_again: "S'entraîner encore", 
+  
   daily_goal: "Objectif du jour", goal_reached: "Objectif atteint !", xp_to_go: "Encore {n} XP", goal_text: "Gagne {n} XP chaque jour pour garder ta série.",
   level_line: "Niveau {n} · {name}", lessons_done: "{done} / {total} leçons terminées", this_week: "Cette semaine", weekdays: "DLMMJVS",
   level_names: "Poussin|Scripteur|Codeur|Débogueur|Hacker|Architecte|Magicien|Gourou|Légende",
@@ -306,7 +326,7 @@ const fr = {
   has_error: "Ton code contient une erreur. Voir le panneau de sortie.", not_right: "Pas encore tout à fait juste.",
   quit_title: "Quitter la leçon ?", quit_text: "Ta progression dans cette leçon sera perdue.", keep_going: "Continuer", quit: "Quitter",
   sol_loaded: "Solution chargée. Lis-la puis appuie sur Vérifier.", lesson_complete: "Leçon terminée !", practice_complete: "Entraînement terminé !", next_up: "Ensuite : {t}",
-  xp_earned: "XP gagnés", first_try: "Du premier coup", back_to_path: "Retour au parcours", finish: "Terminer",
+  xp_earned: "XP gagnés", first_try: "Du premier coup", back_to_path: "Retour à la carte", finish: "Terminer",
   playground: "Bac à sable", examples: "Exemples…", copy: "Copier", clear: "Effacer", run_profile: "Exécuter + Profil", run_profile_tip: "Exécute et mesure le temps et la mémoire maximale",
   copied: "Copié dans le presse-papiers", copy_fail: "Copie impossible", no_problems: "Aucun problème", n_errors_one: "{n} erreur", n_errors_other: "{n} erreurs",
   n_sugg_one: "{n} suggestion", n_sugg_other: "{n} suggestions", ln_col: "Ln {l}, Col {c}",
@@ -354,7 +374,7 @@ const fr = {
   export_data: "Télécharger mes données", export_note: "Un fichier JSON avec ton profil et ta progression.",
   delete_account: "Supprimer le compte", delete_note: "Supprime définitivement ton compte, ta progression et tes entrées au classement. Irréversible.",
   delete_confirm_title: "Supprimer ton compte ?", delete_confirm_text: "Saisis ton nom d'utilisateur ({u}) pour confirmer.", deleted_toast: "Ton compte a été supprimé.",
-  unlock_all: "Débloquer toutes les leçons", unlock_all_note: "Accède à n'importe quelle leçon sans terminer les précédentes.",
+  
   reset_progress: "Réinitialiser la progression", reset_note: "Efface XP, série et leçons terminées sur cet appareil.", reset_confirm: "Réinitialiser toute la progression ?", cant_undo: "Cette action est irréversible.", progress_reset: "Progression réinitialisée",
   guest_banner_title: "Tu apprends en tant qu'invité", guest_banner_text: "Crée un compte gratuit pour sauvegarder ta progression, rejoindre le classement et recevoir des rappels.",
   member_since: "Membre depuis {d}",
@@ -365,6 +385,11 @@ const fr = {
 };
 
 const sv = {
+  map_title: "Din karta", map_explore: "Utforska", map_goal: "Mål", map_fit: "Anpassa till skärmen", map_zoom_in: "Zooma in", map_zoom_out: "Zooma ut", map_hint: "Dra för att utforska · scrolla eller nyp för att zooma",
+  st_strong: "Stark", st_learning: "Lär sig", st_fading: "Bleknar", st_ready: "Redo att starta", st_fog: "Dimma",
+  st_strong_note: "Väl ihågkommet. Det kommer tillbaka för repetition senare.", st_learning_note: "Du har gjort det här. Repetitioner får det att fastna.", st_ready_note: "Allt det bygger på är klart.", st_fog_note: "Bättre att ta andra färdigheter först, men du får kika.",
+  map_revive: "Fräscha upp (snabb repetition)", map_peek: "Kika ändå", map_set_goal: "Sätt som mål", map_clear_goal: "Ta bort mål", map_needs: "Bättre först:", map_goal_left_one: "{n} färdighet kvar", map_goal_left_other: "{n} färdigheter kvar", map_goal_done: "Målet nått!", map_next: "Nästa: {name}",
+  q_learn: "Lär dig", q_quiz: "Quiz", q_predict: "Förutsäg", q_code: "Kod",
   review_upcoming: "Kommande", review_today_short: "Idag",
   viz_title: "Se den köras", viz_tracing: "Följer din kod…", viz_step: "Steg {n} av {total}", viz_frames: "Ramar", viz_objects: "Objekt", viz_output: "Utdata", viz_global: "Global ram",
   viz_play: "Spela", viz_pause: "Pausa", viz_prev: "Föregående steg", viz_next: "Nästa steg", viz_first: "Första steget", viz_last: "Sista steget", viz_speed: "Hastighet",
@@ -378,9 +403,9 @@ const sv = {
   err_username: "Det användarnamnet är inte tillgängligt.", err_cooldown: "Du kan ändra ditt användarnamn en gång var 7:e dag.",
   nav_learn: "Lär dig", nav_playground: "Lekplats", nav_leaderboard: "Topplista", nav_profile: "Profil",
   sign_in: "Logga in", sign_out: "Logga ut", create_account: "Skapa konto", guest: "Gäst",
-  path_title: "Din lärstig", streak: "Dagar i rad", total_xp: "Total XP", level: "Nivå", xp: "XP",
-  start: "STARTA", start_lesson: "Starta lektion", practice_again: "Öva igen", unlock_msg: "Avsluta ”{title}” för att låsa upp den här lektionen.",
-  n_steps: "{n} steg", n_min: "~{n} min", unit_n: "Avsnitt {n}",
+  streak: "Dagar i rad", total_xp: "Total XP", level: "Nivå", xp: "XP",
+  start: "STARTA", start_lesson: "Starta lektion", practice_again: "Öva igen", 
+  
   daily_goal: "Dagsmål", goal_reached: "Målet nått!", xp_to_go: "{n} XP kvar", goal_text: "Tjäna {n} XP varje dag för att behålla din svit.",
   level_line: "Nivå {n} · {name}", lessons_done: "{done} / {total} lektioner klara", this_week: "Den här veckan", weekdays: "SMTOTFL",
   level_names: "Kyckling|Skriptare|Kodare|Felsökare|Hackare|Arkitekt|Trollkarl|Guru|Legend",
@@ -396,7 +421,7 @@ const sv = {
   has_error: "Din kod har ett fel. Se utdata-panelen.", not_right: "Inte riktigt rätt än.",
   quit_title: "Avsluta lektionen?", quit_text: "Dina framsteg i den här lektionen går förlorade.", keep_going: "Fortsätt", quit: "Avsluta",
   sol_loaded: "Lösningen är inladdad. Läs den och tryck på Kontrollera.", lesson_complete: "Lektionen klar!", practice_complete: "Övningen klar!", next_up: "Nästa: {t}",
-  xp_earned: "XP tjänade", first_try: "Första försöket", back_to_path: "Tillbaka till stigen", finish: "Klar",
+  xp_earned: "XP tjänade", first_try: "Första försöket", back_to_path: "Tillbaka till kartan", finish: "Klar",
   playground: "Lekplats", examples: "Exempel…", copy: "Kopiera", clear: "Rensa", run_profile: "Kör + Profil", run_profile_tip: "Kör och mät tid och maximalt minne",
   copied: "Kopierat till urklipp", copy_fail: "Kunde inte kopiera", no_problems: "Inga problem", n_errors_one: "{n} fel", n_errors_other: "{n} fel",
   n_sugg_one: "{n} förslag", n_sugg_other: "{n} förslag", ln_col: "Rad {l}, Kol {c}",
@@ -444,7 +469,7 @@ const sv = {
   export_data: "Ladda ner mina data", export_note: "En JSON-fil med din profil och dina framsteg.",
   delete_account: "Radera konto", delete_note: "Raderar ditt konto, dina framsteg och topplisteposter permanent. Kan inte ångras.",
   delete_confirm_title: "Radera ditt konto?", delete_confirm_text: "Skriv ditt användarnamn ({u}) för att bekräfta.", deleted_toast: "Ditt konto har raderats.",
-  unlock_all: "Lås upp alla lektioner", unlock_all_note: "Hoppa till vilken lektion som helst utan att avsluta de förra.",
+  
   reset_progress: "Återställ framsteg", reset_note: "Raderar XP, svit och klara lektioner på den här enheten.", reset_confirm: "Återställa alla framsteg?", cant_undo: "Det går inte att ångra.", progress_reset: "Framsteg återställda",
   guest_banner_title: "Du lär dig som gäst", guest_banner_text: "Skapa ett gratis konto för att spara dina framsteg, vara med på topplistan och få påminnelser.",
   member_since: "Medlem sedan {d}",

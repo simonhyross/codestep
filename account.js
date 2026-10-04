@@ -319,9 +319,8 @@ async function renderSettings() {
     ${row(t("export_data"), t("export_note"), `<button class="btn btn-ghost btn-sm" id="exp">${t("export_data")}</button>`)}
     ${row(`<span class="danger">${t("delete_account")}</span>`, t("delete_note"), `<button class="btn btn-bad btn-sm" id="del">${t("delete_account")}</button>`)}</section>` : "";
 
-  const learning = `<section class="set-card"><h3>${t("sec_learning")}</h3>
-    ${row(t("unlock_all"), t("unlock_all_note"), toggle("s-unlock", S.unlockAll))}
-    ${!ready ? row(t("reset_progress"), t("reset_note"), `<button class="btn btn-ghost btn-sm" id="s-reset">${t("reset_progress")}</button>`) : ""}</section>`;
+  const learning = ready ? "" : `<section class="set-card"><h3>${t("sec_learning")}</h3>
+    ${row(t("reset_progress"), t("reset_note"), `<button class="btn btn-ghost btn-sm" id="s-reset">${t("reset_progress")}</button>`)}</section>`;
 
   const out = ready ? `<div class="set-foot"><button class="btn btn-ghost" id="so">${t("sign_out")}</button></div>` : "";
   view.innerHTML = `<div class="topbar"><h1>${t("settings_title")}</h1></div><div class="settings">${B && B.demo ? `<div class="banner demo">${t("demo_banner")}</div>` : ""}${guestBanner}${profile}${prefs}${notif}${security}${learning}${out}</div>`;
@@ -333,7 +332,6 @@ async function renderSettings() {
   $("#s-goal", root).onchange = async e => { const n = +e.target.value; App.setGoal(n); if (ready) await save({ daily_goal: n }); else toast(t("saved")); };
   const flip = (id, fn) => { const el = $(id, root); if (!el) return; el.onclick = async () => { const on = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", on); await fn(on); }; };
   flip("#s-lb", on => save({ show_on_leaderboard: on }));
-  flip("#s-unlock", on => { App.S.unlockAll = on; App.save(); });
   const rs = $("#s-reset", root); if (rs) rs.onclick = () => modal({ title: t("reset_confirm"), text: t("cant_undo"), actions: [{ label: t("cancel") }, { label: t("reset_progress"), cls: "btn-bad", onClick: () => { App.clearGuestProgress(); toast(t("progress_reset")); } }] });
   if (!ready) return;
 

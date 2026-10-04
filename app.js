@@ -36,7 +36,6 @@ const ICONS = {
   chip: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
   flame: '<path d="M12 22c4 0 7-2.8 7-7 0-3-1.6-5-3.3-6.8-.5 1.4-1.3 2.2-2.4 2.6C13.5 7 12.4 4.6 10 2c-.2 3.2-1.8 5-3.4 6.8C5 10.4 5 12.7 5 15c0 4.2 3 7 7 7z"/>',
   star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
-  lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   play: '<path d="M7 4.5v15a1 1 0 001.5.9l12-7.5a1 1 0 000-1.8l-12-7.5A1 1 0 007 4.5z"/>',
   pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
@@ -45,6 +44,10 @@ const ICONS = {
   next: '<path d="M7 6l9 6-9 6z"/>',
   last: '<path d="M18 5v14"/><path d="M6 6l9 6-9 6z"/>',
   x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  flag: '<path d="M5 21V4M5 4h12l-3 4 3 4H5"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
@@ -52,13 +55,6 @@ const ICONS = {
 };
 const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 const LESSON_ICON = { hello: "sparkle", numbers: "hash", decisions: "branch", loops: "repeat", functions: "braces", lists: "list", dicts: "key", comprehensions: "bolt", stacks: "layers", queues: "queue", linked: "link", hashing: "grid", trees: "tree", linear: "search", binary: "target", sorting: "bars", merge: "merge", recursion: "refresh", graphs: "network", bigo: "trend", spot: "timer", twosum: "scale", memo: "database", space: "chip" };
-const DECO = [
-  '<circle cx="72" cy="28" r="34"/><circle cx="26" cy="82" r="15"/>',
-  '<path d="M40 0h14L14 100H0zM70 0h14L44 100H30zM100 0h14L74 100H60z"/>',
-  Array.from({ length: 16 }, (_, i) => `<circle cx="${14 + (i % 4) * 24}" cy="${14 + Math.floor(i / 4) * 24}" r="4.5"/>`).join(""),
-  '<path d="M100 14A56 56 0 0044 70h56z"/><circle cx="26" cy="30" r="13"/>',
-  '<path d="M0 56l20-20 20 20 20-20 20 20 20-20v18l-20 20-20-20-20 20-20-20-20 20z"/>',
-];
 
 /* ============================================================ mascot: Bit the snake */
 function mascot(mood = "happy", size = 80, extra = "") {
@@ -97,7 +93,7 @@ const say = (kind, i) => { const a = I18N.list("say_" + kind); return a[(i * 7 +
 /* ============================================================ state */
 const KEY = "codestep:v1";
 const PROGRESS_KEYS = ["xp", "streak", "last", "daily", "done", "srs"];
-const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, srs: {}, theme: null, lang: null, goal: 50, unlockAll: false, pg: null };
+const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, srs: {}, theme: null, lang: null, goal: 50, dest: "", pg: null };
 let S, signedIn = false, guestSaved = null;      // while signed in, progress mirrors the server and is never written to localStorage
 try { S = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { S = { ...defaults }; }
 const pickProgress = o => Object.fromEntries(PROGRESS_KEYS.map(k => [k, o[k]]));
@@ -137,8 +133,6 @@ const hooks = { step: null, review: null, seed: null };
 const FLAT = [];
 UNITS.forEach(u => u.lessons.forEach(l => FLAT.push({ unit: u, lesson: l, i: FLAT.length })));
 const lessonById = id => FLAT.find(x => x.lesson.id === id);
-const isUnlocked = i => S.unlockAll || i === 0 || !!S.done[FLAT[i - 1].lesson.id];
-const currentLesson = () => FLAT.find(x => !S.done[x.lesson.id]);
 const STEP_XP = { quiz: 5, predict: 5, code: 15 };
 const lessonXp = l => l.steps.reduce((a, s) => a + (STEP_XP[s.type] || 0), 20);
 
@@ -421,27 +415,17 @@ function bigoWidget(el) {
 const initWidgets = root => $$("[data-widget=bigo]", root).forEach(bigoWidget);
 
 /* ============================================================ learn view */
-let openNode = null;
 const view = $("#view");
 const stats = () => `<div class="stat fire" title="${esc(t("streak"))}">${ico("flame", "fill")}<b>${currentStreak()}</b></div><div class="stat xp" title="${esc(t("total_xp"))}">${ico("bolt", "fill")}<b>${S.xp}</b></div><div class="stat lvl" title="${levelName()}">${ico("star", "fill")}<b>${level()}</b></div>`;
 
-function renderLearn() {
-  const cur = currentLesson();
-  const dx = [0, 46, 74, 46, 0, -46, -74, -46];
-  const units = UNITS.map(u => {
-    const done = u.lessons.filter(l => S.done[l.id]).length;
-    const nodes = u.lessons.map((l, k) => {
-      const f = lessonById(l.id);
-      const state = S.done[l.id] ? "done" : !isUnlocked(f.i) ? "locked" : (cur && cur.lesson.id === l.id ? "current" : "open");
-      const pop = openNode === l.id ? popover(f, state) : "";
-      return `<div class="node-row"><div class="node-wrap" style="--dx:${dx[k % 8]}px">
-        ${state === "current" && openNode !== l.id ? `<span class="start-tag">${t("start")}</span>` : ""}
-        <button class="node ${state}" data-node="${l.id}" aria-label="${esc(l.title)} (${state})">${ico(state === "locked" ? "lock" : LESSON_ICON[l.id] || "sparkle")}${state === "done" ? `<span class="badge">${ico("check")}</span>` : ""}</button>
-        <span class="node-label">${esc(l.title)}</span></div>${pop}</div>`;
-    }).join("");
-    return `<section class="unit u-${u.color}"><div class="unit-banner"><svg class="deco" viewBox="0 0 100 100" aria-hidden="true">${DECO[UNITS.indexOf(u) % DECO.length]}</svg><small>${t("unit_n", { n: UNITS.indexOf(u) + 1 })}</small><h2>${esc(u.title)}</h2><p>${esc(u.desc)}</p><div class="bar"><i style="width:${done / u.lessons.length * 100}%"></i></div></div><div class="nodes">${nodes}</div></section>`;
-  }).join("");
+/** Everything the skill map needs from the app (it stays free of app state). */
+const mapContext = () => ({
+  units: UNITS, goals: GOALS, S, t, tn, esc, ico, mascot, today: dayKey(), icons: ICONS, lessonIcon: LESSON_ICON, lessonXp,
+  keysOf: id => Object.keys(STEP_BY_KEY).filter(k => STEP_BY_KEY[k].lesson.id === id),
+  setDest: id => { S.dest = id; save(); renderLearn(); },
+});
 
+function renderLearn() {
   const today = S.daily[dayKey()] || 0, pct = Math.min(1, today / goal()), C = 2 * Math.PI * 35;
   const lv = (S.xp % XP_PER_LEVEL);
   const week = Array.from({ length: 7 }, (_, i) => { const d = dayOffset(i - 6); return { l: [...t("weekdays")][d.getDay()], on: (S.daily[dayKey(d)] || 0) > 0, today: i === 6 }; });
@@ -455,19 +439,9 @@ function renderLearn() {
       <p><strong>${pct >= 1 ? t("goal_reached") : t("xp_to_go", { n: goal() - today })}</strong>${t("goal_text", { n: goal() })}</p></div></div>
     <div class="card"><h3>${t("level")}</h3><div class="lvl-top"><b>${t("level_line", { n: level(), name: levelName() })}</b><span>${lv}/${XP_PER_LEVEL} XP</span></div><div class="lvl-bar"><i style="width:${lv}%"></i></div><span class="chip">${t("lessons_done", { done: doneCount, total: FLAT.length })}</span></div>
     <div class="card"><h3>${t("this_week")}</h3><div class="week">${week.map(d => `<div class="${d.on ? "on" : ""} ${d.today ? "today" : ""}"><i>${d.on ? ico("flame", "fill") : ""}</i>${d.l}</div>`).join("")}</div></div>`;
-  view.innerHTML = `<div class="topbar"><h1>${t("path_title")}</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet">${greeting}${rev}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
+  view.innerHTML = `<div class="topbar"><h1>${t("map_title")}</h1>${stats()}</div><div class="learn"><div class="mapcol"><div class="greet">${greeting}${rev}</div><div id="map-host"></div></div><aside class="rail">${rail}</aside></div>`;
+  LearnMap.render($("#map-host", view), mapContext());
 }
-function popover(f, state) {
-  const l = f.lesson, mins = Math.max(3, Math.round(l.steps.length * 1.2));
-  const meta = `<div class="meta"><span class="chip">${t("n_steps", { n: l.steps.length })}</span><span class="chip">${t("n_min", { n: mins })}</span><span class="chip">+${lessonXp(l)} XP</span></div>`;
-  if (state === "locked") return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${t("unlock_msg", { title: esc(FLAT[f.i - 1].lesson.title) })}</p></div>`;
-  return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${esc(l.blurb)}</p>${meta}<button class="btn btn-primary btn-block" data-start="${l.id}">${state === "done" ? t("practice_again") : t("start_lesson")}</button></div>`;
-}
-view.addEventListener("click", e => {
-  const st = e.target.closest("[data-start]"); if (st) { location.hash = "#/lesson/" + st.dataset.start; return; }
-  const nd = e.target.closest("[data-node]");
-  if (nd) { const id = nd.dataset.node; openNode = openNode === id ? null : id; renderLearn(); }
-});
 
 /* ============================================================ playground */
 function renderPlayground() {
@@ -521,7 +495,7 @@ let L = null; // active lesson state
 
 function openLesson(id) {
   const f = lessonById(id);
-  if (!f || !isUnlocked(f.i)) { location.hash = "#/learn"; return; }
+  if (!f) { location.hash = "#/learn"; return; }
   L = { f, lesson: f.lesson, i: 0, replay: !!S.done[id], xp: 0, graded: 0, first: 0, token: 0 };
   mountLesson();
 }
@@ -711,7 +685,7 @@ function renderFinish() {
   foot(`<span class="grow"></span><button class="btn btn-primary" id="go">${nx ? t("back_to_path") : t("finish")}</button>`);
   $("#go").onclick = () => (location.hash = "#/learn");
   if (!L.replay) { const x = $("#l-xp"); if (x) $("b", x).textContent = L.xp; }
-  confetti(); openNode = null;
+  confetti();
 }
 
 /* ============================================================ review: hub, sessions */
@@ -776,11 +750,6 @@ function route() {
   if (r === "playground") { document.title = t("playground") + " · Codestep"; renderPlayground(); }
   else {
     document.title = "Codestep: Learn Python by Doing"; renderLearn();
-    requestAnimationFrame(() => {
-      const cur = $(".node.current", view); if (!cur) return;
-      const r = cur.getBoundingClientRect();
-      if (r.top < 120 || r.bottom > innerHeight - 80) scrollTo(0, Math.max(0, r.top + scrollY - innerHeight / 2));
-    });
   }
 }
 
