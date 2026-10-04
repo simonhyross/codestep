@@ -45,12 +45,17 @@ create table if not exists public.profiles (
 );
 create unique index if not exists profiles_username_lower_key on public.profiles (lower(username));
 
+-- Names nobody may take (impersonation / routing). Used by the profile trigger, the sign-up trigger and the availability check.
+create or replace function public.is_reserved_username(p text)
+returns boolean language sql immutable set search_path = '' as $$
+  select lower(p) = any (array['admin','administrator','root','support','help','pip','pythonic','moderator','mod','staff','system','official','null','undefined','api','www'])
+$$;
+
 create or replace function public.profiles_guard()
 returns trigger language plpgsql set search_path = public as $$
-declare reserved text[] := array['admin','administrator','root','support','help','pip','pythonic','moderator','mod','staff','system','official','null','undefined','api','www'];
 begin
   if new.username is distinct from old.username then
-    if lower(new.username) = any (reserved) then
+    if public.is_reserved_username(new.username) then
       raise exception 'username is reserved' using errcode = '22023';
     end if;
     if old.username_set and old.username_changed_at is not null and old.username_changed_at > now() - interval '7 days' then
@@ -72,7 +77,7 @@ returns trigger language plpgsql security definer set search_path = public as $$
 declare wanted text := new.raw_user_meta_data ->> 'username'; uname text; picked boolean := false; tries int := 0;
 begin
   if wanted ~ '^[A-Za-z0-9_]{3,20}$'
-     and lower(wanted) <> all (array['admin','administrator','root','support','help','pip','pythonic','moderator','mod','staff','system','official','null','undefined','api','www'])
+     and not public.is_reserved_username(wanted)
      and not exists (select 1 from public.profiles where lower(username) = lower(wanted)) then
     uname := wanted; picked := true;
   end if;
@@ -207,7 +212,7 @@ language sql stable security definer set search_path = public as $$
   )
   select r.rnk, r.username, r.avatar, r.avatar_version, r.user_id, r.xp, (r.user_id = auth.uid())
   from ranked r
-  where r.rnk <= least(greatest(p_limit, 1), 100) or r.user_id = auth.uid()
+  where (r.rnk <= least(greatest(p_limit, 1), 100) or r.user_id = auth.uid())
   order by r.rnk, r.username
 $$;
 
@@ -215,7 +220,7 @@ $$;
 create or replace function public.username_available(p_username text)
 returns boolean language sql stable security definer set search_path = public as $$
   select p_username ~ '^[A-Za-z0-9_]{3,20}$'
-     and lower(p_username) <> all (array['admin','administrator','root','support','help','pip','pythonic','moderator','mod','staff','system','official','null','undefined','api','www'])
+     and not public.is_reserved_username(p_username)
      and not exists (select 1 from public.profiles where lower(username) = lower(p_username) and id is distinct from auth.uid())
 $$;
 
@@ -275,6 +280,7 @@ begin
 end $$;
 
 -- Lock down function execution: nothing is callable by default; grant explicitly.
+revoke all on function public.handle_new_user() from public, anon, authenticated;   -- trigger function: never callable as an API endpoint
 revoke all on function public.get_my_progress(), public.record_step(text, int), public.import_guest_progress(text[]),
   public.get_leaderboard(text, int), public.username_available(text), public.delete_my_account(), public.export_my_data(),
   public.claim_due_emails(), public.set_email_pref(uuid, text, boolean) from public, anon, authenticated;

@@ -5,9 +5,9 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? "⌘" : "Ctrl";
+const t = (k, v) => I18N.t(k, v), tn = (k, n) => I18N.tn(k, n);
 
 const ICON = {
   sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
@@ -45,6 +45,7 @@ const ICONS = {
   star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
 };
 const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;
@@ -88,19 +89,16 @@ function pip(mood = "happy", size = 80, extra = "") {
     <circle cx="32" cy="62" r="5.5" fill="#ff7a59" opacity=".5"/><circle cx="88" cy="62" r="5.5" fill="#ff7a59" opacity=".5"/>
     ${mouth}${extras}</svg></span>`;
 }
-const SAY = {
-  learn: ["Here's the key idea. Read it, then you'll try it!", "Short and sweet. Then it's your turn.", "Take your time. I'll be here when you're ready.", "This part unlocks the next challenge!"],
-  quiz: ["Which one do you think it is?", "Take a guess. Mistakes help you learn!", "Think it through, you've got this.", "Trust your gut, then check!"],
-  code: ["You can do this!", "Break it into small steps.", "Run early and often. It's free!", "Stuck? Peek at the hint."],
-};
-const say = (kind, i) => SAY[kind][(i * 7 + kind.length) % SAY[kind].length];
+const say = (kind, i) => { const a = I18N.list("say_" + kind); return a[(i * 7 + kind.length) % a.length]; };
 
 /* ============================================================ state */
 const KEY = "pythonic:v1";
-const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, theme: null, unlockAll: false, pg: null };
-let S;
+const PROGRESS_KEYS = ["xp", "streak", "last", "daily", "done"];
+const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, theme: null, lang: null, goal: 50, unlockAll: false, pg: null };
+let S, signedIn = false, guestSaved = null;      // while signed in, progress mirrors the server and is never written to localStorage
 try { S = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { S = { ...defaults }; }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const pickProgress = o => Object.fromEntries(PROGRESS_KEYS.map(k => [k, o[k]]));
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(signedIn ? { ...S, ...guestSaved } : S)); } catch {} };
 
 const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const dayOffset = n => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
@@ -117,9 +115,20 @@ function award(n) {
 }
 const XP_PER_LEVEL = 100;
 const level = () => 1 + Math.floor(S.xp / XP_PER_LEVEL);
-const LEVEL_NAMES = ["Hatchling", "Scripter", "Coder", "Debugger", "Hacker", "Architect", "Wizard", "Guru", "Legend"];
-const levelName = () => LEVEL_NAMES[Math.min(level() - 1, LEVEL_NAMES.length - 1)];
-const GOAL = 50;
+const levelName = () => { const a = I18N.list("level_names"); return a[Math.min(level() - 1, a.length - 1)]; };
+const goal = () => S.goal || 50;
+
+/* ---- account bridge: swap between guest progress (localStorage) and server progress ---- */
+function applyServerProgress(p) {
+  S.xp = p.xp; S.streak = p.streak; S.daily = p.daily || {};
+  S.done = Object.fromEntries((p.done || []).map(id => [id, true]));
+  S.last = p.streak > 0 ? (p.today_xp > 0 ? dayKey() : dayKey(dayOffset(-1))) : null;
+}
+function enterAccount() { if (!signedIn) { guestSaved = structuredClone(pickProgress(S)); signedIn = true; } }
+function leaveAccount() { if (signedIn) { Object.assign(S, structuredClone(guestSaved)); signedIn = false; guestSaved = null; } }
+const guestDoneLessons = () => Object.keys((signedIn ? guestSaved : S).done || {});
+function clearGuestProgress() { const fresh = pickProgress(structuredClone(defaults)); if (signedIn) guestSaved = fresh; else Object.assign(S, fresh); save(); }
+const hooks = { step: null };
 
 const FLAT = [];
 UNITS.forEach(u => u.lessons.forEach(l => FLAT.push({ unit: u, lesson: l, i: FLAT.length })));
@@ -130,9 +139,9 @@ const lessonXp = l => l.steps.reduce((a, s) => a + (s.type === "quiz" ? 5 : s.ty
 
 /* ============================================================ theme */
 function applyTheme() {
-  const t = S.theme || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-  document.documentElement.dataset.theme = t;
-  $("#btn-theme").innerHTML = t === "dark" ? ICON.sun : ICON.moon;
+  const th = (S.theme && S.theme !== "system") ? S.theme : (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  document.documentElement.dataset.theme = th;
+  $("#btn-theme").innerHTML = th === "dark" ? ICON.sun : ICON.moon;
 }
 
 /* ============================================================ python runtime (web worker) */
@@ -204,12 +213,13 @@ const Py = (() => {
   };
 })();
 
-Py.onStatus(s => {
+const paintRuntime = () => Py.onStatus(s => {
   const el = $("#runtime");
   el.className = "runtime " + (s === "ready" ? "ready" : s === "error" ? "error" : "");
-  $("span", el).textContent = s === "ready" ? "Python 3.12 ready" : s === "error" ? "Python failed to load" : "Loading Python…";
-  if (s === "error") el.title = "Check your internet connection. Python (Pyodide) is downloaded from a CDN.";
+  $("span", el).textContent = s === "ready" ? t("py_ready") : s === "error" ? t("py_failed") : t("py_loading");
+  if (s === "error") el.title = t("py_failed_tip");
 });
+let offRuntime = paintRuntime();
 
 /* ============================================================ ui bits */
 function toast(msg) {
@@ -289,24 +299,24 @@ function makeEditor(parent, { value = "", onRun, onChange, onProblems, onCursor 
 function makeConsole(onJump) {
   const el = document.createElement("div");
   el.className = "ide-console";
-  el.innerHTML = `<div class="tabs"><button class="tab on" data-t="out">Output</button><button class="tab" data-t="prob">Problems <span class="n ok">✓</span></button><span class="sp"></span><div class="prof"></div></div><div class="pane"></div>`;
+  el.innerHTML = `<div class="tabs"><button class="tab on" data-t="out">${t("output")}</button><button class="tab" data-t="prob">${t("problems")} <span class="n ok">✓</span></button><span class="sp"></span><div class="prof"></div></div><div class="pane"></div>`;
   const pane = $(".pane", el), badge = $(".tab .n", el);
   let tab = "out", out = { kind: "idle" }, probs = [];
 
   function renderOut() {
-    if (out.kind === "idle") return `<div class="empty">${pip("think", 52)}<span>Press <b>Run</b> (${MOD}+Enter) and I'll show your output here.</span></div>`;
-    if (out.kind === "running") return `<div class="running"><span class="spin"></span>${Py.status === "ready" ? "Running…" : "Warming up Python (first load takes a few seconds)…"}</div>`;
+    if (out.kind === "idle") return `<div class="empty">${pip("think", 52)}<span>${t("press_run", { b: "<b>" + esc(t("run")) + "</b>", k: MOD })}</span></div>`;
+    if (out.kind === "running") return `<div class="running"><span class="spin"></span>${Py.status === "ready" ? t("running") : t("warming")}</div>`;
     const r = out.r;
-    if (r.timeout) return `<div class="errbox"><b>Stopped</b>: your code ran for more than ${r.limit || 8} seconds.<div class="h">Look for an infinite loop (a while whose condition never becomes false) or a very slow algorithm.</div></div>`;
-    let html = r.out ? `<pre>${esc(r.out)}</pre>` : (r.error ? "" : `<span class="dim">(no output)</span>`);
+    if (r.timeout) return `<div class="errbox"><b>${t("stopped")}</b>: ${t("stopped_text", { n: r.limit || 8 })}<div class="h">${t("stopped_hint")}</div></div>`;
+    let html = r.out ? `<pre>${esc(r.out)}</pre>` : (r.error ? "" : `<span class="dim">${t("no_output")}</span>`);
     if (r.error) {
       const e = r.error;
-      html += `<div class="errbox"><b>${esc(e.type)}</b>: ${esc(e.msg)}${e.line ? ` <a data-line="${e.line}">line ${e.line}</a>` : ""}${e.hint ? `<div class="h">${esc(e.hint)}</div>` : ""}</div>`;
+      html += `<div class="errbox"><b>${esc(e.type)}</b>: ${esc(e.msg)}${e.line ? ` <a data-line="${e.line}">${t("line_n", { n: e.line })}</a>` : ""}${e.hint ? `<div class="h">${esc(e.hint)}</div>` : ""}</div>`;
     }
     return html;
   }
   function renderProbs() {
-    if (!probs.length) return `<div class="clean">✓ No problems found. Clean code!</div>`;
+    if (!probs.length) return `<div class="clean">✓ ${t("clean_code")}</div>`;
     return probs.map(p => `<div class="prob" data-line="${p.line}" data-col="${p.col}"><span class="sev ${p.severity}"></span><span class="loc">Ln ${p.line}</span><span>${esc(p.message)}</span><span class="rule">${p.rule}</span></div>`).join("");
   }
   function render() {
@@ -317,7 +327,7 @@ function makeConsole(onJump) {
     pane.innerHTML = tab === "out" ? renderOut() : renderProbs();
     pane.scrollTop = keep;
     const prof = $(".prof", el);
-    prof.innerHTML = out.r && out.r.profile ? `<span>${ico("timer")} ${fmtMs(out.r.profile.ms)}</span><span>${ico("chip")} peak ${fmtKb(out.r.profile.peak_kb)}</span>` : "";
+    prof.innerHTML = out.r && out.r.profile ? `<span>${ico("timer")} ${fmtMs(out.r.profile.ms)}</span><span>${ico("chip")} ${t("peak", { m: fmtKb(out.r.profile.peak_kb) })}</span>` : "";
   }
   el.addEventListener("click", e => {
     const t = e.target.closest(".tab"); if (t) { tab = t.dataset.t; render(); return; }
@@ -372,7 +382,7 @@ const initWidgets = root => $$("[data-widget=bigo]", root).forEach(bigoWidget);
 /* ============================================================ learn view */
 let openNode = null;
 const view = $("#view");
-const stats = () => `<div class="stat fire" title="Day streak">${ico("flame", "fill")}<b>${currentStreak()}</b></div><div class="stat xp" title="Total XP">${ico("bolt", "fill")}<b>${S.xp}</b></div><div class="stat lvl" title="${levelName()}">${ico("star", "fill")}<b>${level()}</b></div>`;
+const stats = () => `<div class="stat fire" title="${esc(t("streak"))}">${ico("flame", "fill")}<b>${currentStreak()}</b></div><div class="stat xp" title="${esc(t("total_xp"))}">${ico("bolt", "fill")}<b>${S.xp}</b></div><div class="stat lvl" title="${levelName()}">${ico("star", "fill")}<b>${level()}</b></div>`;
 
 function renderLearn() {
   const cur = currentLesson();
@@ -384,32 +394,32 @@ function renderLearn() {
       const state = S.done[l.id] ? "done" : !isUnlocked(f.i) ? "locked" : (cur && cur.lesson.id === l.id ? "current" : "open");
       const pop = openNode === l.id ? popover(f, state) : "";
       return `<div class="node-row"><div class="node-wrap" style="--dx:${dx[k % 8]}px">
-        ${state === "current" && openNode !== l.id ? '<span class="start-tag">START</span>' : ""}
+        ${state === "current" && openNode !== l.id ? `<span class="start-tag">${t("start")}</span>` : ""}
         <button class="node ${state}" data-node="${l.id}" aria-label="${esc(l.title)} (${state})">${ico(state === "locked" ? "lock" : LESSON_ICON[l.id] || "sparkle")}${state === "done" ? `<span class="badge">${ico("check")}</span>` : ""}</button>
         <span class="node-label">${esc(l.title)}</span></div>${pop}</div>`;
     }).join("");
-    return `<section class="unit u-${u.color}"><div class="unit-banner"><svg class="deco" viewBox="0 0 100 100" aria-hidden="true">${DECO[UNITS.indexOf(u) % DECO.length]}</svg><small>Unit ${UNITS.indexOf(u) + 1}</small><h2>${esc(u.title)}</h2><p>${esc(u.desc)}</p><div class="bar"><i style="width:${done / u.lessons.length * 100}%"></i></div></div><div class="nodes">${nodes}</div></section>`;
+    return `<section class="unit u-${u.color}"><div class="unit-banner"><svg class="deco" viewBox="0 0 100 100" aria-hidden="true">${DECO[UNITS.indexOf(u) % DECO.length]}</svg><small>${t("unit_n", { n: UNITS.indexOf(u) + 1 })}</small><h2>${esc(u.title)}</h2><p>${esc(u.desc)}</p><div class="bar"><i style="width:${done / u.lessons.length * 100}%"></i></div></div><div class="nodes">${nodes}</div></section>`;
   }).join("");
 
-  const today = S.daily[dayKey()] || 0, pct = Math.min(1, today / GOAL), C = 2 * Math.PI * 35;
+  const today = S.daily[dayKey()] || 0, pct = Math.min(1, today / goal()), C = 2 * Math.PI * 35;
   const lv = (S.xp % XP_PER_LEVEL);
-  const week = Array.from({ length: 7 }, (_, i) => { const d = dayOffset(i - 6); return { l: "SMTWTFS"[d.getDay()], on: (S.daily[dayKey(d)] || 0) > 0, today: i === 6 }; });
+  const week = Array.from({ length: 7 }, (_, i) => { const d = dayOffset(i - 6); return { l: [...t("weekdays")][d.getDay()], on: (S.daily[dayKey(d)] || 0) > 0, today: i === 6 }; });
   const doneCount = FLAT.filter(x => S.done[x.lesson.id]).length;
   const sk = currentStreak();
-  const greeting = `<div class="card pipcard">${pip(sk ? "happy" : "think", 74)}<p><strong>${sk ? `${sk}-day streak. Nice!` : "Hi, I'm Pip!"}</strong>${sk ? "Keep it going with one more lesson." : "I'll be your guide. Pick a lesson to begin."}</p></div>`;
+  const greeting = `<div class="card pipcard">${pip(sk ? "happy" : "think", 74)}<p><strong>${window.Account && Account.name() ? t("pip_welcome", { name: esc(Account.name()) }) : sk ? t("pip_streak", { n: sk }) : t("pip_hi")}</strong>${sk ? t("pip_more") : window.Account && Account.name() ? t("pip_ready") : t("pip_guide")}</p></div>`;
   const rail = `${greeting}
-    <div class="card"><h3>Daily goal</h3><div class="goal">
+    <div class="card"><h3>${t("daily_goal")}</h3><div class="goal">
       <div class="ring"><svg viewBox="0 0 84 84"><circle class="trk" cx="42" cy="42" r="35" fill="none"/><circle class="val" cx="42" cy="42" r="35" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg><b>${pct >= 1 ? "✓" : today}</b></div>
-      <p><strong>${pct >= 1 ? "Goal reached!" : `${GOAL - today} XP to go`}</strong>Earn ${GOAL} XP every day to keep your streak alive.</p></div></div>
-    <div class="card"><h3>Level</h3><div class="lvl-top"><b>Level ${level()} · ${levelName()}</b><span>${lv}/${XP_PER_LEVEL} XP</span></div><div class="lvl-bar"><i style="width:${lv}%"></i></div><span class="chip">${doneCount} / ${FLAT.length} lessons complete</span></div>
-    <div class="card"><h3>This week</h3><div class="week">${week.map(d => `<div class="${d.on ? "on" : ""} ${d.today ? "today" : ""}"><i>${d.on ? ico("flame", "fill") : ""}</i>${d.l}</div>`).join("")}</div></div>`;
-  view.innerHTML = `<div class="topbar"><h1>Your learning path</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet" style="width:100%;max-width:560px">${greeting}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
+      <p><strong>${pct >= 1 ? t("goal_reached") : t("xp_to_go", { n: goal() - today })}</strong>${t("goal_text", { n: goal() })}</p></div></div>
+    <div class="card"><h3>${t("level")}</h3><div class="lvl-top"><b>${t("level_line", { n: level(), name: levelName() })}</b><span>${lv}/${XP_PER_LEVEL} XP</span></div><div class="lvl-bar"><i style="width:${lv}%"></i></div><span class="chip">${t("lessons_done", { done: doneCount, total: FLAT.length })}</span></div>
+    <div class="card"><h3>${t("this_week")}</h3><div class="week">${week.map(d => `<div class="${d.on ? "on" : ""} ${d.today ? "today" : ""}"><i>${d.on ? ico("flame", "fill") : ""}</i>${d.l}</div>`).join("")}</div></div>`;
+  view.innerHTML = `<div class="topbar"><h1>${t("path_title")}</h1>${stats()}</div><div class="learn"><div class="path"><div class="greet">${greeting}</div>${units}</div><aside class="rail">${rail}</aside></div>`;
 }
 function popover(f, state) {
   const l = f.lesson, mins = Math.max(3, Math.round(l.steps.length * 1.2));
-  const meta = `<div class="meta"><span class="chip">${l.steps.length} steps</span><span class="chip">~${mins} min</span><span class="chip">+${lessonXp(l)} XP</span></div>`;
-  if (state === "locked") return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>Finish “${esc(FLAT[f.i - 1].lesson.title)}” to unlock this lesson.</p></div>`;
-  return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${esc(l.blurb)}</p>${meta}<button class="btn btn-primary btn-block" data-start="${l.id}">${state === "done" ? "Practice again" : "Start lesson"}</button></div>`;
+  const meta = `<div class="meta"><span class="chip">${t("n_steps", { n: l.steps.length })}</span><span class="chip">${t("n_min", { n: mins })}</span><span class="chip">+${lessonXp(l)} XP</span></div>`;
+  if (state === "locked") return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${t("unlock_msg", { title: esc(FLAT[f.i - 1].lesson.title) })}</p></div>`;
+  return `<div class="node-pop"><h3>${esc(l.title)}</h3><p>${esc(l.blurb)}</p>${meta}<button class="btn btn-primary btn-block" data-start="${l.id}">${state === "done" ? t("practice_again") : t("start_lesson")}</button></div>`;
 }
 view.addEventListener("click", e => {
   const st = e.target.closest("[data-start]"); if (st) { location.hash = "#/lesson/" + st.dataset.start; return; }
@@ -418,18 +428,17 @@ view.addEventListener("click", e => {
 });
 
 /* ============================================================ playground */
-let pgCode = null;
 function renderPlayground() {
   const initial = S.pg ?? EXAMPLES[0].code;
   view.innerHTML = `<div class="pg">
-    <div class="pg-tools"><h1>Playground <small>Python 3.12</small></h1>
-      <select class="select" id="pg-ex" aria-label="Load an example"><option value="">Examples…</option>${EXAMPLES.map((e, i) => `<option value="${i}">${esc(e.name)}</option>`).join("")}</select>
-      <button class="btn btn-ghost btn-sm" id="pg-copy">Copy</button>
-      <button class="btn btn-ghost btn-sm" id="pg-clear">Clear</button>
-      <button class="btn btn-ghost btn-sm" id="pg-prof" title="Run and measure time and peak memory">${ico("timer")} Run + Profile</button>
-      <button class="btn btn-primary btn-sm" id="pg-run">${ICON.play} Run <span class="kbd">${MOD}↵</span></button></div>
+    <div class="pg-tools"><h1>${t("playground")} <small>Python 3.12</small></h1>
+      <select class="select" id="pg-ex" aria-label="${esc(t("examples"))}"><option value="">${t("examples")}</option>${EXAMPLES.map((e, i) => `<option value="${i}">${esc(e.name)}</option>`).join("")}</select>
+      <button class="btn btn-ghost btn-sm" id="pg-copy">${t("copy")}</button>
+      <button class="btn btn-ghost btn-sm" id="pg-clear">${t("clear")}</button>
+      <button class="btn btn-ghost btn-sm" id="pg-prof" title="${esc(t("run_profile_tip"))}">${ico("timer")} ${t("run_profile")}</button>
+      <button class="btn btn-primary btn-sm" id="pg-run">${ICON.play} ${t("run")} <span class="kbd">${MOD}↵</span></button></div>
     <div class="pg-grid"><div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>main.py</span><span class="sp"></span></div><div class="ide-ed"></div>
-      <div class="statusline"><span class="pill ok" id="pg-pill">✓ No problems</span><span id="pg-pos">Ln 1, Col 1</span><span style="margin-left:auto">UTF-8 · Spaces: 4</span></div></div>
+      <div class="statusline"><span class="pill ok" id="pg-pill">✓ ${t("no_problems")}</span><span id="pg-pos">${t("ln_col", { l: 1, c: 1 })}</span><span style="margin-left:auto">UTF-8 · Spaces: 4</span></div></div>
       <div class="pg-out"></div></div></div>`;
   const cons = makeConsole((l, c) => jumpTo(cm)(l, c));
   $(".pg-out", view).appendChild(cons.el);
@@ -445,20 +454,20 @@ function renderPlayground() {
   const cm = makeEditor($(".ide-ed", view), {
     value: initial, onRun: () => run(false),
     onChange: v => { S.pg = v; save(); },
-    onCursor: c => { $("#pg-pos").textContent = `Ln ${c.line + 1}, Col ${c.ch + 1}`; },
+    onCursor: c => { $("#pg-pos").textContent = t("ln_col", { l: c.line + 1, c: c.ch + 1 }); },
     onProblems: list => {
       cons.problems(list);
       const e = list.filter(p => p.severity === "error").length, w = list.length - e;
       const pill = $("#pg-pill"); if (!pill) return;
       pill.className = "pill " + (e ? "err" : list.length ? "warn" : "ok");
-      pill.textContent = !list.length ? "✓ No problems" : `${e ? "● " + e + " error" + (e > 1 ? "s" : "") : ""}${e && w ? ", " : ""}${w ? "▲ " + w + " suggestion" + (w > 1 ? "s" : "") : ""}`;
+      pill.textContent = !list.length ? "✓ " + t("no_problems") : `${e ? "● " + tn("n_errors", e) : ""}${e && w ? ", " : ""}${w ? "▲ " + tn("n_sugg", w) : ""}`;
     },
   });
   $("#pg-pill").onclick = () => cons.showTab("prob");
   $("#pg-run").onclick = () => run(false);
   $("#pg-prof").onclick = () => run(true);
   $("#pg-clear").onclick = () => { cm.setValue(""); cm.focus(); };
-  $("#pg-copy").onclick = () => navigator.clipboard.writeText(cm.getValue()).then(() => toast("Copied to clipboard"), () => toast("Couldn't copy"));
+  $("#pg-copy").onclick = () => navigator.clipboard.writeText(cm.getValue()).then(() => toast(t("copied")), () => toast(t("copy_fail")));
   $("#pg-ex").onchange = e => { if (e.target.value === "") return; cm.setValue(EXAMPLES[+e.target.value].code); e.target.value = ""; cm.focus(); };
 }
 
@@ -471,10 +480,10 @@ function openLesson(id) {
   if (!f || !isUnlocked(f.i)) { location.hash = "#/learn"; return; }
   L = { f, lesson: f.lesson, i: 0, replay: !!S.done[id], xp: 0, graded: 0, first: 0, token: 0 };
   $("#shell").hidden = true; lroot.hidden = false;
-  lroot.innerHTML = `<header class="l-top"><button class="l-close" aria-label="Quit lesson">${ICON.x}</button><div class="l-progress"></div><div class="stat xp" id="l-xp">${ico("bolt", "fill")}<b>0</b></div></header><section class="l-body" id="l-body"></section><footer class="l-foot" id="l-foot"><div class="l-foot-in"></div></footer>`;
+  lroot.innerHTML = `<header class="l-top"><button class="l-close" aria-label="${esc(t("quit"))}">${ICON.x}</button><div class="l-progress"></div><div class="stat xp" id="l-xp">${ico("bolt", "fill")}<b>0</b></div></header><section class="l-body" id="l-body"></section><footer class="l-foot" id="l-foot"><div class="l-foot-in"></div></footer>`;
   $(".l-close", lroot).onclick = () => {
     if (L.i === 0 && !L.xp) return (location.hash = "#/learn");
-    modal({ title: "Quit this lesson?", text: "Your progress in this lesson will be lost.", actions: [{ label: "Keep going", cls: "btn-primary" }, { label: "Quit", cls: "btn-ghost", onClick: () => (location.hash = "#/learn") }] });
+    modal({ title: t("quit_title"), text: t("quit_text"), actions: [{ label: t("keep_going"), cls: "btn-primary" }, { label: t("quit"), cls: "btn-ghost", onClick: () => (location.hash = "#/learn") }] });
   };
   renderStep();
 }
@@ -487,7 +496,7 @@ const foot = html => { const f = $("#l-foot"); f.className = "l-foot"; $(".l-foo
 function setFoot(kind, inner) { const f = $("#l-foot"); f.className = "l-foot " + (kind || ""); $(".l-foot-in", f).innerHTML = inner; }
 function gain(n) {
   if (L.replay) n = 0;
-  L.xp += n; if (n) award(n);
+  L.xp += n; if (n) { award(n); hooks.step && hooks.step(`${L.lesson.id}:${L.i}`, n); }
   const x = $("#l-xp"); if (x) { $("b", x).textContent = L.xp; x.classList.remove("bump"); void x.offsetWidth; x.classList.add("bump"); }
   return n;
 }
@@ -504,17 +513,17 @@ function renderStep() {
 function renderLearnStep(step, body) {
   body.innerHTML = `<div class="l-wrap"><div class="learn-card"><div class="kicker">${esc(L.lesson.title)}</div><h2>${esc(step.title)}</h2><div class="pipsay">${pip("happy", 64)}<div class="bubble">${say("learn", L.i)}</div></div><div class="prose">${step.html}</div></div></div>`;
   highlight(body); initWidgets(body);
-  foot(`<span class="kbd-hint"><kbd>${MOD} ↵</kbd> to continue</span><span class="grow"></span><button class="btn btn-primary" id="go">Continue <span class="kbd">${MOD}↵</span></button>`);
+  foot(`<span class="kbd-hint">${t("to_continue", { k: `<kbd>${MOD} ↵</kbd>` })}</span><span class="grow"></span><button class="btn btn-primary" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
   $("#go").onclick = next;
 }
 
 function renderQuiz(step, body) {
   const order = step.options.map((_, i) => i).sort(() => Math.random() - .5);
   let sel = null, tries = 0, locked = false;
-  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">Quick check</div><div class="pipsay">${pip("think", 64)}<div class="bubble">${say("quiz", L.i)}</div></div><h2>${esc(step.q)}</h2>${step.code ? `<pre class="codeblock" data-code="${esc(step.code)}"></pre>` : ""}<div class="opts" role="listbox">${order.map((o, k) => `<button class="opt" data-o="${o}"><span class="k">${k + 1}</span><span class="${/[\[\]\(\)\{\}=*%\/]|^[\d,. ]+$/.test(step.options[o]) ? "t" : ""}">${esc(step.options[o])}</span></button>`).join("")}</div><div class="kbd-hint">Press <kbd>1</kbd>–<kbd>${order.length}</kbd> to choose · <kbd>${MOD} ↵</kbd> to check</div></div>`;
+  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">${t("quick_check")}</div><div class="pipsay">${pip("think", 64)}<div class="bubble">${say("quiz", L.i)}</div></div><h2>${esc(step.q)}</h2>${step.code ? `<pre class="codeblock" data-code="${esc(step.code)}"></pre>` : ""}<div class="opts" role="listbox">${order.map((o, k) => `<button class="opt" data-o="${o}"><span class="k">${k + 1}</span><span class="${/[\[\]\(\)\{\}=*%\/]|^[\d,. ]+$/.test(step.options[o]) ? "t" : ""}">${esc(step.options[o])}</span></button>`).join("")}</div><div class="kbd-hint">${t("press_choose", { a: "<kbd>1</kbd>", b: `<kbd>${order.length}</kbd>`, k: `<kbd>${MOD} ↵</kbd>` })}</div></div>`;
   highlight(body);
   const opts = $$(".opt", body);
-  const idle = () => foot(`<span class="grow"></span><button class="btn btn-primary" id="chk" ${sel === null ? "disabled" : ""}>Check <span class="kbd">${MOD}↵</span></button>`) && ($("#chk").onclick = check);
+  const idle = () => foot(`<span class="grow"></span><button class="btn btn-primary" id="chk" ${sel === null ? "disabled" : ""}>${t("check")} <span class="kbd">${MOD}↵</span></button>`) && ($("#chk").onclick = check);
   function choose(b) {
     if (locked) return;
     opts.forEach(o => o.classList.remove("sel")); b.classList.add("sel"); sel = +b.dataset.o; idle();
@@ -528,18 +537,18 @@ function renderQuiz(step, body) {
       locked = true; if (tries === 0) L.first++;
       chosen.classList.replace("sel", "right"); opts.forEach(o => (o.disabled = true));
       const g = gain(tries === 0 ? 5 : 2);
-      setFoot("good", `<div class="fb"><span class="fb-pip">${pip("cheer", 58)}</span><div class="fb-text"><h4>Correct!${g ? ` +${g} XP` : ""}</h4><p>${esc(step.explain)}</p></div></div><button class="btn btn-good" id="go">Continue <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("good", `<div class="fb"><span class="fb-pip">${pip("cheer", 58)}</span><div class="fb-text"><h4>${t("correct")}${g ? ` +${g} XP` : ""}</h4><p>${esc(step.explain)}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       $("#go").onclick = next; return;
     }
     tries++; chosen.classList.replace("sel", "wrong");
     const why = step.why && step.why[sel];
     if (tries >= 2) {
       locked = true; opts.forEach(o => { o.disabled = true; if (+o.dataset.o === step.answer) o.classList.add("right"); });
-      setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>Correct answer: ${esc(step.options[step.answer])}</h4><p>${why ? esc(why) + " " : ""}${esc(step.explain)}</p></div></div><button class="btn btn-bad" id="go">Continue <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>${t("correct_answer", { a: esc(step.options[step.answer]) })}</h4><p>${why ? esc(why) + " " : ""}${esc(step.explain)}</p></div></div><button class="btn btn-bad" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       $("#go").onclick = next; return;
     }
     locked = true; opts.forEach(o => (o.disabled = true));
-    setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>Not quite</h4><p>${esc(why || "Have another look and try again.")}</p></div></div><button class="btn btn-bad" id="again">Try again <span class="kbd">${MOD}↵</span></button>`);
+    setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(why || t("look_again"))}</p></div></div><button class="btn btn-bad" id="again">${t("try_again")} <span class="kbd">${MOD}↵</span></button>`);
     $("#again").onclick = () => { locked = false; opts.forEach(o => { o.disabled = false; o.classList.remove("wrong", "sel"); }); sel = null; idle(); };
   }
   idle();
@@ -549,7 +558,7 @@ function renderCodeStep(step, body) {
   const token = ++L.token;
   let attempts = 0, hintUsed = false, shown = false, busy = false, graded = false, passed = false;
   body.innerHTML = `<div class="l-wrap wide"><div class="code-step">
-    <div class="task"><div class="card"><div class="kicker">Challenge</div><h2>${esc(L.lesson.title)}</h2><div class="pipsay">${pip("happy", 54)}<div class="bubble">${say("code", L.i)}</div></div><div class="prose" style="margin-top:14px">${step.prompt}</div></div><div id="hintslot"></div></div>
+    <div class="task"><div class="card"><div class="kicker">${t("challenge")}</div><h2>${esc(L.lesson.title)}</h2><div class="pipsay">${pip("happy", 54)}<div class="bubble">${say("code", L.i)}</div></div><div class="prose" style="margin-top:14px">${step.prompt}</div></div><div id="hintslot"></div></div>
     <div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>solution.py</span><span class="sp"></span></div><div class="ide-ed"></div></div></div></div>`;
   highlight($(".task", body));
   const cons = makeConsole((l, c) => jumpTo(cm)(l, c));
@@ -558,8 +567,8 @@ function renderCodeStep(step, body) {
   setTimeout(() => cm.focus(), 50);
 
   const controls = () => {
-    foot(`<button class="btn btn-ghost btn-sm" id="hint">${ico("bulb")} Hint</button><button class="btn btn-ghost btn-sm" id="reset">Reset</button><span class="grow"></span><button class="btn btn-ghost" id="run">${ICON.play} Run</button><button class="btn btn-primary" id="chk">Check <span class="kbd">${MOD}↵</span></button>`);
-    $("#hint").onclick = () => { hintUsed = true; $("#hintslot", body).innerHTML = `<div class="hintbox">${pip("think", 44)}<span><b>Hint from Pip:</b> ${esc(step.hint)}</span></div>`; };
+    foot(`<button class="btn btn-ghost btn-sm" id="hint">${ico("bulb")} ${t("hint")}</button><button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button><span class="grow"></span><button class="btn btn-ghost" id="run">${ICON.play} ${t("run")}</button><button class="btn btn-primary" id="chk">${t("check")} <span class="kbd">${MOD}↵</span></button>`);
+    $("#hint").onclick = () => { hintUsed = true; $("#hintslot", body).innerHTML = `<div class="hintbox">${pip("think", 44)}<span><b>${t("hint_from")}</b> ${esc(step.hint)}</span></div>`; };
     $("#reset").onclick = () => { cm.setValue(step.starter); cm.focus(); };
     $("#run").onclick = () => exec(false);
     $("#chk").onclick = () => check();
@@ -582,14 +591,14 @@ function renderCodeStep(step, body) {
       passed = true;
       if (!graded) { graded = true; L.graded++; if (attempts === 1 && !hintUsed && !shown) L.first++; }
       const g = gain(shown ? 0 : attempts === 1 && !hintUsed ? 15 : hintUsed || attempts > 2 ? 5 : 10);
-      setFoot("good", `<div class="fb"><span class="fb-pip">${pip("cheer", 58)}</span><div class="fb-text"><h4>Brilliant!${g ? ` +${g} XP` : ""}</h4><p>All tests passed.</p></div></div><button class="btn btn-good" id="go">Continue <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("good", `<div class="fb"><span class="fb-pip">${pip("cheer", 58)}</span><div class="fb-text"><h4>${t("brilliant")}${g ? ` +${g} XP` : ""}</h4><p>${t("all_tests")}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       $("#go").onclick = next; return;
     }
     if (!graded) { graded = true; L.graded++; }
-    const msg = r.timeout ? "Your code ran too long. Check for infinite loops or a slower-than-needed algorithm." : r.error ? "Your code has an error. See the output panel." : (r.message || "Not quite right yet.");
-    setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>Not quite</h4><p>${esc(msg)}</p></div></div>${attempts >= 3 && !shown ? `<button class="btn btn-ghost btn-sm" id="sol">Show solution</button>` : ""}<button class="btn btn-bad" id="again">Try again</button>`);
+    const msg = r.timeout ? t("too_long") : r.error ? t("has_error") : (r.message || t("not_right"));
+    setFoot("bad", `<div class="fb"><span class="fb-pip">${pip("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(msg)}</p></div></div>${attempts >= 3 && !shown ? `<button class="btn btn-ghost btn-sm" id="sol">${t("show_solution")}</button>` : ""}<button class="btn btn-bad" id="again">${t("try_again")}</button>`);
     $("#again").onclick = () => { controls(); cm.focus(); };
-    const sol = $("#sol"); if (sol) sol.onclick = () => { shown = true; cm.setValue(step.solution); controls(); toast("Solution loaded. Read it, then press Check."); };
+    const sol = $("#sol"); if (sol) sol.onclick = () => { shown = true; cm.setValue(step.solution); controls(); toast(t("sol_loaded")); };
   }
   controls();
 }
@@ -600,32 +609,27 @@ function renderFinish() {
   if (first) { S.done[L.lesson.id] = true; bonus = L.replay ? 0 : 20; }
   if (bonus) L.xp += bonus;
   award(bonus);
+  if (bonus) hooks.step && hooks.step(`${L.lesson.id}:bonus`, bonus);
   $(".l-progress", lroot).innerHTML = L.lesson.steps.map(() => `<i class="done"></i>`).join("");
   const acc = L.graded ? Math.round(L.first / L.graded * 100) : 100;
   const nx = FLAT[L.f.i + 1];
-  $("#l-body").innerHTML = `<div class="l-wrap"><div class="done-screen"><div class="trophy">${pip("cheer", 150)}</div><h2>${L.replay ? "Practice complete!" : "Lesson complete!"}</h2><p>${esc(L.lesson.title)}${nx && !L.replay ? ` · Next up: ${esc(nx.lesson.title)}` : ""}</p>
-    <div class="done-stats"><div class="xp"><small>XP earned</small><b>${ico("bolt","fill")}+${L.xp}</b></div><div class="acc"><small>First-try</small><b>${acc}%</b></div><div class="st"><small>Day streak</small><b>${ico("flame","fill")}${currentStreak()}</b></div></div></div></div>`;
-  foot(`<span class="grow"></span><button class="btn btn-primary" id="go">${nx ? "Back to path" : "Finish"}</button>`);
+  $("#l-body").innerHTML = `<div class="l-wrap"><div class="done-screen"><div class="trophy">${pip("cheer", 150)}</div><h2>${L.replay ? t("practice_complete") : t("lesson_complete")}</h2><p>${esc(L.lesson.title)}${nx && !L.replay ? ` · ${t("next_up", { t: esc(nx.lesson.title) })}` : ""}</p>
+    <div class="done-stats"><div class="xp"><small>${t("xp_earned")}</small><b>${ico("bolt","fill")}+${L.xp}</b></div><div class="acc"><small>${t("first_try")}</small><b>${acc}%</b></div><div class="st"><small>${t("streak")}</small><b>${ico("flame","fill")}${currentStreak()}</b></div></div></div></div>`;
+  foot(`<span class="grow"></span><button class="btn btn-primary" id="go">${nx ? t("back_to_path") : t("finish")}</button>`);
   $("#go").onclick = () => (location.hash = "#/learn");
   if (!L.replay) { const x = $("#l-xp"); if (x) $("b", x).textContent = L.xp; }
   confetti(); openNode = null;
 }
 
-/* ============================================================ settings, router */
-function openSettings() {
-  const html = `<div class="row"><div><b>Unlock all lessons</b><span>Jump to any lesson without finishing the previous ones.</span></div><button class="switch" role="switch" aria-checked="${S.unlockAll}" id="sw"></button></div>
-    <div class="row"><div><b>Reset progress</b><span>Erase XP, streak and completed lessons.</span></div><button class="btn btn-ghost btn-sm" id="rst">Reset</button></div>`;
-  modal({ title: "Settings", html, actions: [{ label: "Done", cls: "btn-primary" }] });
-  $("#sw").onclick = e => { S.unlockAll = !S.unlockAll; e.currentTarget.setAttribute("aria-checked", S.unlockAll); save(); if (currentRoute() === "learn") renderLearn(); };
-  $("#rst").onclick = () => modal({ title: "Reset all progress?", text: "This can't be undone.", actions: [{ label: "Cancel" }, { label: "Reset", cls: "btn-bad", onClick: () => { S = { ...defaults, theme: S.theme, pg: S.pg }; save(); toast("Progress reset"); route(); } }] });
-}
-const currentRoute = () => (location.hash.split("/")[1] || "learn");
+/* ============================================================ router */
+const routes = {};   // extra pages registered by account.js: name -> fn(arg)
 function route() {
   const [, r, arg] = (location.hash || "#/learn").split("/");
   if (r === "lesson") { if (!L || L.lesson.id !== arg) { closeLesson(); openLesson(arg); } return; }
   if (L) closeLesson();
   $$("[data-route]").forEach(a => a.classList.toggle("active", a.dataset.route === (r || "learn")));
-  if (r === "playground") { document.title = "Playground · Pythonic"; renderPlayground(); }
+  if (routes[r]) { routes[r](arg); return; }
+  if (r === "playground") { document.title = t("playground") + " · Pythonic"; renderPlayground(); }
   else {
     document.title = "Pythonic: Learn Python by Doing"; renderLearn();
     requestAnimationFrame(() => {
@@ -636,9 +640,8 @@ function route() {
   }
 }
 
-$("#btn-theme").onclick = () => { S.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; save(); applyTheme(); };
-$("#btn-settings").onclick = openSettings;
-$("#btn-settings-m").onclick = openSettings;
+$("#btn-theme").onclick = () => { S.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; save(); applyTheme(); window.Account && Account.onThemeChanged(S.theme); };
+$("#btn-settings").onclick = () => (location.hash = "#/settings");
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && $("#modal-root").firstChild) { $("#modal-root").innerHTML = ""; return; }
   if (!L || $("#modal-root").firstChild) return;
@@ -672,6 +675,17 @@ document.addEventListener("keydown", e => {
   }
 });
 window.addEventListener("hashchange", route);
+function setLanguage(l, silent) {
+  S.lang = I18N.setLang(l); save();
+  offRuntime && offRuntime(); offRuntime = paintRuntime();
+  if (!silent) route();
+}
+I18N.setLang(S.lang || I18N.detect());
+offRuntime && offRuntime(); offRuntime = paintRuntime();
 applyTheme(); route();
-window.__pythonic = { Py, pip, S: () => S }; // handy for debugging in the console
+window.App = {
+  get S() { return S; }, get signedIn() { return signedIn; }, save, view, modal, toast, t, tn, esc, ico, pip, MOD, $, $$, hooks, routes,
+  applyTheme, setLanguage, applyServerProgress, enterAccount, leaveAccount, clearGuestProgress, guestDoneLessons,
+  refresh: route, setGoal: n => { S.goal = n; save(); },
+};
 })();

@@ -21,6 +21,16 @@ It needs an internet connection on first load (Pyodide, CodeMirror and fonts com
   mutable defaults, bare except, naming, unreachable code, style).
 - **Safe execution**: Python (Pyodide) runs in a Web Worker. Infinite loops are stopped after 8 seconds.
 
+## Accounts, leaderboards and settings (optional)
+
+Sign in with email or Google, keep progress across devices, climb a weekly and all-time leaderboard, and manage a profile
+(username, avatar, language, theme, daily goal, reminder and summary emails, data export and account deletion).
+The interface is available in English, Spanish, German, French and Swedish (lessons stay in English).
+
+It needs a free Supabase project; without one the app runs as a guest-only site exactly as before.
+**See [SETUP.md](SETUP.md)** for the step-by-step setup, the security model and the tests.
+To try the screens without any backend, open `http://localhost:5180/?mock=1` (demo mode, localhost only).
+
 ## Files
 
 | File | Purpose |
@@ -29,6 +39,11 @@ It needs an internet connection on first load (Pyodide, CodeMirror and fonts com
 | `pyruntime.js` | Python-side runner, test harness, profiler and linter |
 | `app.js` | UI, routing, progress, worker management |
 | `styles.css` | Design system (dark and light themes) |
+| `i18n.js` | Interface translations (5 languages) |
+| `backend.js` | Supabase adapter plus a localhost-only demo backend |
+| `account.js` | Sign-in, settings, leaderboard and progress sync |
+| `config.js` | Public Supabase URL and anon key (empty = guest-only) |
+| `supabase/` | SQL schema, RLS, email functions and tests |
 
 ## Adding a lesson
 
