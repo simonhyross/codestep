@@ -16,18 +16,26 @@ const hasRoute = name => (location.hash.split("/")[1] || "learn") === name;
 
 /* ------------------------------------------------------------ avatars */
 const PRESETS = [
-  { bg: "#dbe7ff", body: "#ffc931" }, { bg: "#fff2c4", body: "#2f6bff" }, { bg: "#e4ecff", body: "#8dbbff" }, { bg: "#ffe8cc", body: "#ff9f1c" },
-  { bg: "#ffc931", body: "#26409a" }, { bg: "#dff5ea", body: "#ff7a59" }, { bg: "#fff2c4", body: "#4fd1a5" }, { bg: "#2f6bff", body: "#c9b6ff" },
+  { bg: "#dbe7ff", body: "#ffc931", rim: "#2f6bff" }, { bg: "#fff2c4", body: "#2f6bff", rim: "#ffc931" }, { bg: "#e4ecff", body: "#8dbbff", rim: "#ff7a59" }, { bg: "#ffe8cc", body: "#ff9f1c", rim: "#ffffff" },
+  { bg: "#ffc931", body: "#26409a", rim: "#ffffff" }, { bg: "#dff5ea", body: "#ff7a59", rim: "#ffc931" }, { bg: "#fff2c4", body: "#4fd1a5", rim: "#2f6bff" }, { bg: "#2f6bff", body: "#c9b6ff", rim: "#ffc931" },
 ];
-function presetSvg(n) {
+function presetSvg(n) {          // the mascot's head and hoodie, in the preset's colours
   const p = PRESETS[(n - 1) % 8] || PRESETS[0], ink = "#0b1b3a";
+  const head = "M60 15 C82 15 100 24 104 42 C107 52 107 62 100 70 C92 79 76 82 60 82 C44 82 28 79 20 70 C13 62 13 52 16 42 C20 24 38 15 60 15Z";
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="${p.bg}"/>
-    <path d="M38 34 Q35 20 26 18 M62 34 Q65 20 74 18" fill="none" stroke="${ink}" stroke-width="3.4" stroke-linecap="round"/><circle cx="25" cy="18" r="4.6" fill="#2f6bff" stroke="${ink}" stroke-width="2.6"/><circle cx="75" cy="18" r="4.6" fill="#2f6bff" stroke="${ink}" stroke-width="2.6"/>
-    <path d="M16 66 C16 42 32 30 50 30 C68 30 84 42 84 66 C84 88 70 98 50 98 C30 98 16 88 16 66Z" fill="${p.body}" stroke="${ink}" stroke-width="4"/>
-    <ellipse cx="36" cy="43" rx="9" ry="3.6" fill="#fff" opacity=".5" transform="rotate(-26 36 43)"/>
-    <ellipse cx="36" cy="64" rx="8.5" ry="9.5" fill="#fff" stroke="${ink}" stroke-width="3"/><ellipse cx="64" cy="64" rx="8.5" ry="9.5" fill="#fff" stroke="${ink}" stroke-width="3"/>
-    <circle cx="37" cy="65.5" r="4.4" fill="${ink}"/><circle cx="65" cy="65.5" r="4.4" fill="${ink}"/>
-    <path d="M40 82 Q50 90 60 82" fill="none" stroke="${ink}" stroke-width="3.4" stroke-linecap="round"/></svg>`;
+    <g transform="translate(2 6) scale(.8)">
+      <circle cx="26" cy="24" r="13" fill="${ink}"/><circle cx="94" cy="24" r="13" fill="${ink}"/>
+      <path d="M22 112 C22 96 34 86 60 86 C86 86 98 96 98 112Z" fill="${p.body}" stroke="${ink}" stroke-width="4.4" stroke-linejoin="round"/>
+      <path d="${head}" fill="#fff" stroke="${ink}" stroke-width="4.4" stroke-linejoin="round"/>
+      <ellipse cx="38.5" cy="52" rx="13.4" ry="16.6" transform="rotate(24 38.5 52)" fill="${ink}"/><ellipse cx="81.5" cy="52" rx="13.4" ry="16.6" transform="rotate(-24 81.5 52)" fill="${ink}"/>
+      <circle cx="38.5" cy="53" r="6.2" fill="#fff"/><circle cx="81.5" cy="53" r="6.2" fill="#fff"/>
+      <circle cx="39.5" cy="54" r="3.4" fill="${ink}"/><circle cx="80.5" cy="54" r="3.4" fill="${ink}"/><circle cx="41" cy="52.6" r="1.2" fill="#fff"/><circle cx="82" cy="52.6" r="1.2" fill="#fff"/>
+      <circle cx="38.5" cy="52" r="10" fill="none" stroke="${p.rim}" stroke-width="3.6"/><circle cx="81.5" cy="52" r="10" fill="none" stroke="${p.rim}" stroke-width="3.6"/>
+      <path d="M48.5 49 Q60 43.5 71.5 49" fill="none" stroke="${ink}" stroke-width="7" stroke-linecap="round"/><path d="M48.5 49 Q60 43.5 71.5 49" fill="none" stroke="${p.rim}" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="37" cy="72.4" rx="4.8" ry="3.5" fill="#ff7a59" opacity=".55"/><ellipse cx="83" cy="72.4" rx="4.8" ry="3.5" fill="#ff7a59" opacity=".55"/>
+      <path d="M54.2 60 Q60 57.2 65.8 60 Q65 65.8 60 67 Q55 65.8 54.2 60Z" fill="${ink}" stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M60 67 V69" stroke="${ink}" stroke-width="2.8" stroke-linecap="round"/><path d="M52 68.6 Q56 75.2 60 69 Q64 75.2 68 68.6" fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </g></svg>`;
 }
 function avatar(p, size = 40) {
   const url = p && p.avatar === "upload" ? B.avatarUrl(p) : null;
@@ -284,14 +292,12 @@ async function renderSettings() {
   document.title = t("settings_title") + " · Codestep";
   const S = App.S, ready = Account.phase === "ready" && Account.profile, p = Account.profile || {};
   const themeCur = ready ? (p.theme || "system") : (S.theme || "system");
-  const langCur = ready ? p.language : I18N.lang;
   const goalCur = ready ? p.daily_goal : (S.goal || 50);
   const tzNow = (ready && p.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const tzs = timezones(); if (!tzs.includes(tzNow)) tzs.unshift(tzNow);
 
   const guestBanner = !ready && enabled ? `<div class="set-card banner-card">${mascot("happy", 70)}<div><h3>${t("guest_banner_title")}</h3><p>${t("guest_banner_text")}</p><div class="btns"><a class="btn btn-primary btn-sm" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost btn-sm" href="#/auth/signin">${t("sign_in")}</a></div></div></div>` : "";
   const prefs = `<section class="set-card"><h3>${t("sec_prefs")}</h3>
-    ${row(t("language"), t("language_note"), `<select class="select" id="s-lang">${I18N.LANGS.map(l => opt(l, I18N.NAMES[l], langCur)).join("")}</select>`)}
     ${row(t("theme"), "", `<div class="seg" id="s-theme">${["system", "light", "dark"].map(v => `<button data-v="${v}" class="${v === themeCur ? "on" : ""}">${t("theme_" + v)}</button>`).join("")}</div>`)}
     ${row(t("goal_label"), "", `<select class="select" id="s-goal">${[20, 50, 100, 150].map(n => opt(n, t("goal_xp", { n }), goalCur)).join("")}</select>`)}
     ${ready ? row(t("show_lb"), t("show_lb_note"), toggle("s-lb", p.show_on_leaderboard)) : ""}</section>`;
@@ -328,7 +334,6 @@ async function renderSettings() {
   const root = view;
 
   /* preferences */
-  $("#s-lang", root).onchange = async e => { const l = e.target.value; if (ready) await save({ language: l }, { quiet: true }); App.setLanguage(l); };
   $$("#s-theme button", root).forEach(b => (b.onclick = async () => { const v = b.dataset.v; App.S.theme = v === "system" ? null : v; App.save(); App.applyTheme(); if (ready) await save({ theme: v }, { quiet: true }); $$("#s-theme button", root).forEach(x => x.classList.toggle("on", x === b)); }));
   $("#s-goal", root).onchange = async e => { const n = +e.target.value; App.setGoal(n); if (ready) await save({ daily_goal: n }); else toast(t("saved")); };
   const flip = (id, fn) => { const el = $(id, root); if (!el) return; el.onclick = async () => { const on = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", on); await fn(on); }; };
