@@ -1,13 +1,13 @@
-# Pythonic: project auth settings. Review and apply with:   supabase config push
+# Codestep: project auth settings. Review and apply with:   supabase config push
 # (it prints a diff of what will change on the linked project and asks you to confirm).
 # Contains no secrets. Google sign-in credentials are referenced from environment variables.
-project_id = "pythonic"
+project_id = "codestep"
 
 [auth]
 enabled = true
-site_url = "https://simonhyross.github.io/pythonic/"
+site_url = "https://simonhyross.github.io/codestep/"
 # Only these URLs may receive sign-in / confirmation / reset redirects (blocks open-redirect abuse).
-additional_redirect_urls = ["https://simonhyross.github.io/pythonic/", "http://localhost:5180/"]
+additional_redirect_urls = ["https://simonhyross.github.io/codestep/", "http://localhost:5180/"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10

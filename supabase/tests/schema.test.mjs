@@ -37,7 +37,7 @@ const P = id => profs.find(p => p.id === id);
 ok(P(alice).username === "Alice_1" && P(alice).username_set, "valid username kept");
 ok(P(bob).username !== "alice_1" && !P(bob).username_set, "duplicate username replaced");
 ok(P(carl).username !== "admin", "reserved username replaced");
-ok(/^pip[0-9a-f]{7}$/.test(P(dina).username) && !P(dina).username_set, "random username when none given");
+ok(/^coder[0-9a-f]{7}$/.test(P(dina).username) && !P(dina).username_set, "random username when none given");
 
 console.log("row level security");
 await as(alice);
@@ -179,6 +179,47 @@ await db.query("insert into completions (user_id, step_key, xp) values ($1, 'hel
 await db.exec("set role service_role");
 claim = await q("select * from claim_due_emails() where user_id = $1", [eUser]);
 ok(!claim.some(c => c.kind === "reminder"), "no reminder if already practised today");
+
+console.log("spaced review");
+await su();
+const rv = await mk("rv@x.io", { username: "reviewer" }), rv2 = await mk("rv2@x.io", { username: "reviewer2" });
+const today = (await q("select current_date::text d"))[0].d;
+await as(rv);
+await db.query("select record_review('hello:1', 'good', 1, 2.55, 1, 0, current_date + 1)");
+await db.query("select record_review('hello:1', 'good', 3, 2.6, 2, 0, current_date + 3)");
+let pr2 = (await q("select get_my_progress() as p"))[0].p;
+ok(pr2.reviews.length === 1 && pr2.reviews[0].interval === 3 && pr2.reviews[0].reps === 2 && pr2.reviews[0].k === "hello:1", "review is upserted, one row per exercise");
+ok(pr2.streak === 1 && pr2.xp === 0, "a review counts for the streak but earns no XP");
+await throws(() => db.query("select record_review('hello:bonus', 'good', 1, 2.5, 1, 0, current_date + 1)"), /unknown step/, "bonus steps cannot be reviewed");
+await throws(() => db.query("select record_review('nope:1', 'good', 1, 2.5, 1, 0, current_date + 1)"), /unknown step/, "unknown step rejected");
+await throws(() => db.query("select record_review('hello:1', 'perfect', 1, 2.5, 1, 0, current_date + 1)"), /invalid review/, "unknown quality rejected");
+await throws(() => db.query("select record_review('hello:1', 'good', 1, 2.5, 1, 0, current_date + 4000)"), /invalid review/, "absurd due date rejected");
+await throws(() => db.query("select record_review('hello:1', 'good', 9999, 2.5, 1, 0, current_date + 1)"), /check constraint/, "interval is bounded");
+await throws(() => db.query("select record_review('hello:1', 'good', 1, 9, 1, 0, current_date + 1)"), /numeric field overflow|check constraint/, "ease is bounded");
+await throws(() => db.query("insert into reviews (user_id, step_key, due, interval_days, ease, reps, lapses) values ($1, 'hello:2', current_date, 1, 2.5, 1, 0)", [rv]), /permission denied/, "no direct writes to reviews");
+await throws(() => db.query("select * from review_log"), /permission denied/, "review_log is not readable by clients");
+await as(rv2);
+ok((await q("select count(*)::int c from reviews"))[0].c === 0 && (await q("select get_my_progress() as p"))[0].p.reviews.length === 0, "other users cannot see someone else's reviews");
+await as(rv);
+await db.query("select seed_reviews($1::jsonb)", [JSON.stringify([{ k: "hello:1", due: today, interval: 2 }, { k: "hello:2", due: "2999-01-01", interval: 99 }, { k: "bogus", due: today, interval: 1 }, { k: "hello:bonus", due: today, interval: 1 }])]);
+pr2 = (await q("select get_my_progress() as p"))[0].p;
+const byKey = Object.fromEntries(pr2.reviews.map(x => [x.k, x]));
+ok(byKey["hello:1"].interval === 3, "seeding never overwrites an existing schedule");
+ok(byKey["hello:2"] && byKey["hello:2"].interval === 7 && !byKey.bogus && !byKey["hello:bonus"], "seeding clamps values and ignores unknown or bonus steps");
+let limited2 = false;
+for (let k = 0; k < 45; k++) { try { await db.query("select record_review('hello:1', 'good', 1, 2.5, 1, 0, current_date + 1)"); } catch (e) { if (/rate limited/.test(e.message)) { limited2 = true; break; } throw e; } }
+ok(limited2, "reviews are rate limited");
+await su();
+await db.query("insert into review_log (user_id, step_key, quality, logged_at) values ($1, 'hello:1', 'good', now() - interval '1 day')", [rv]);
+await as(rv);
+ok((await q("select get_my_progress() as p"))[0].p.streak === 2, "review days extend the streak");
+await su();
+await db.query("update profiles set reminders_enabled = true, reminder_time = (now() at time zone 'utc')::time - interval '5 minutes', timezone = 'UTC', last_reminder_on = null where id = $1", [rv]);
+await db.exec("set role service_role");
+if (new Date().getUTCHours() * 60 + new Date().getUTCMinutes() >= 5) ok(!(await q("select * from claim_due_emails() where user_id = $1", [rv])).some(c => c.kind === "reminder"), "no reminder after practising by review");
+await su();
+await db.query("delete from auth.users where id = $1", [rv]);
+ok((await q("select (select count(*) from reviews where user_id = $1)::int + (select count(*) from review_log where user_id = $1)::int c", [rv]))[0].c === 0, "deleting the account removes reviews and history");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Pythonic: Learn Python by Doing</title>
+  <title>Codestep: Learn Python by Doing</title>
   <meta name="description" content="Learn Python, algorithms, data structures and efficiency with bite-sized interactive lessons, a playground and a built-in linter.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%232f6bff'/%3E%3Ccircle cx='20' cy='21' r='11' fill='%23ffc931' stroke='%230b1b3a' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%23fff' stroke='%230b1b3a' stroke-width='1.5'/%3E%3Ccircle cx='24.5' cy='19' r='3' fill='%23fff' stroke='%230b1b3a' stroke-width='1.5'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 rx=%2212%22 fill=%22%232f6bff%22/%3E%3Cpath d=%22M15 12 Q13 7 9.500 6.500 M25 12 Q27 7 30.500 6.500%22 fill=%22none%22 stroke=%22%230b1b3a%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%229%22 cy=%226.500%22 r=%222%22 fill=%22%23ffc931%22/%3E%3Ccircle cx=%2231%22 cy=%226.500%22 r=%222%22 fill=%22%23ffc931%22/%3E%3Cpath d=%22M7 25 C7 15 13 11 20 11 C27 11 33 15 33 25 C33 33 27 37 20 37 C13 37 7 33 7 25Z%22 fill=%22%23ffc931%22 stroke=%22%230b1b3a%22 stroke-width=%222.500%22/%3E%3Ccircle cx=%2215%22 cy=%2223%22 r=%223.600%22 fill=%22%23fff%22 stroke=%22%230b1b3a%22 stroke-width=%221.600%22/%3E%3Ccircle cx=%2225%22 cy=%2223%22 r=%223.600%22 fill=%22%23fff%22 stroke=%22%230b1b3a%22 stroke-width=%221.600%22/%3E%3Ccircle cx=%2215.500%22 cy=%2223.500%22 r=%221.500%22 fill=%22%230b1b3a%22/%3E%3Ccircle cx=%2225.500%22 cy=%2223.500%22 r=%221.500%22 fill=%22%230b1b3a%22/%3E%3Cpath d=%22M16 29.500q4 3.200 8 0%22 fill=%22none%22 stroke=%22%230b1b3a%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co https://cdn.jsdelivr.net https://pypi.org https://files.pythonhosted.org; object-src 'none'; base-uri 'none'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#fbf7ec">
@@ -18,13 +18,14 @@
 <body>
   <div id="shell" class="shell">
     <aside class="sidebar">
-      <a class="brand" href="#/learn" aria-label="Pythonic home">
-        <span class="brand-mark"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="#2f6bff"/><circle cx="20" cy="22" r="11" fill="#ffc931" stroke="#0b1b3a" stroke-width="2.5"/><circle cx="15.8" cy="20" r="3.4" fill="#fff" stroke="#0b1b3a" stroke-width="1.6"/><circle cx="24.6" cy="20" r="3.4" fill="#fff" stroke="#0b1b3a" stroke-width="1.6"/><circle cx="16.3" cy="20.4" r="1.4" fill="#0b1b3a"/><circle cx="25.1" cy="20.4" r="1.4" fill="#0b1b3a"/><path d="M16 26.5q4 3.2 8 0" fill="none" stroke="#0b1b3a" stroke-width="2" stroke-linecap="round"/></svg></span>
-        <span class="brand-name">pythonic</span>
+      <a class="brand" href="#/learn" aria-label="Codestep home">
+        <span class="brand-mark"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="#2f6bff"/><path d="M15 12 Q13 7 9.500 6.500 M25 12 Q27 7 30.500 6.500" fill="none" stroke="#0b1b3a" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="6.500" r="2" fill="#ffc931"/><circle cx="31" cy="6.500" r="2" fill="#ffc931"/><path d="M7 25 C7 15 13 11 20 11 C27 11 33 15 33 25 C33 33 27 37 20 37 C13 37 7 33 7 25Z" fill="#ffc931" stroke="#0b1b3a" stroke-width="2.500"/><circle cx="15" cy="23" r="3.600" fill="#fff" stroke="#0b1b3a" stroke-width="1.600"/><circle cx="25" cy="23" r="3.600" fill="#fff" stroke="#0b1b3a" stroke-width="1.600"/><circle cx="15.500" cy="23.500" r="1.500" fill="#0b1b3a"/><circle cx="25.500" cy="23.500" r="1.500" fill="#0b1b3a"/><path d="M16 29.500q4 3.200 8 0" fill="none" stroke="#0b1b3a" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <span class="brand-name">codestep</span>
       </a>
       <nav class="nav" id="nav">
         <a href="#/learn" data-route="learn"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5zM5 12.5v4.2c0 .5.3 1 .8 1.2 1.7.9 3.9 1.6 6.2 1.6s4.5-.7 6.2-1.6c.5-.2.8-.7.8-1.2v-4.2"/></svg><span data-i18n="nav_learn">Learn</span></a>
         <a href="#/playground" data-route="playground"><svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg><span data-i18n="nav_playground">Playground</span></a>
+        <a href="#/review" data-route="review"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg><span data-i18n="nav_review">Review</span><em class="due-badge" hidden></em></a>
         <a href="#/leaderboard" data-route="leaderboard"><svg viewBox="0 0 24 24"><path d="M5 20V12M12 20V4M19 20v-6"/></svg><span data-i18n="nav_leaderboard">Leaderboard</span></a>
       </nav>
       <div class="side-foot">
@@ -40,6 +41,7 @@
     <nav class="bottomnav" id="bottomnav">
       <a href="#/learn" data-route="learn"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5zM5 12.5v4.2c0 .5.3 1 .8 1.2 1.7.9 3.9 1.6 6.2 1.6s4.5-.7 6.2-1.6c.5-.2.8-.7.8-1.2v-4.2"/></svg><span data-i18n="nav_learn">Learn</span></a>
       <a href="#/playground" data-route="playground"><svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg><span data-i18n="nav_playground">Playground</span></a>
+      <a href="#/review" data-route="review"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg><span data-i18n="nav_review">Review</span><em class="due-badge" hidden></em></a>
       <a href="#/leaderboard" data-route="leaderboard"><svg viewBox="0 0 24 24"><path d="M5 20V12M12 20V4M19 20v-6"/></svg><span data-i18n="nav_leaderboard">Leaderboard</span></a>
       <a href="#/settings" id="nav-profile" data-route="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-i18n="nav_profile">Profile</span></a>
     </nav>
@@ -57,10 +59,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
   <script src="config.js"></script>
   <script src="i18n.js"></script>
+  <script src="srs.js"></script>
   <script src="pyruntime.js"></script>
   <script src="lessons.js"></script>
   <script src="backend.js"></script>
   <script src="app.js"></script>
+  <script src="visualizer.js"></script>
   <script src="account.js"></script>
 </body>
 </html>

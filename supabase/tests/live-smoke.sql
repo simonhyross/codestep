@@ -24,6 +24,13 @@ begin
   p := public.record_step('hello:bonus', 20);
   assert p->'done' ? 'hello' and (p->>'streak')::int = 1, 'bonus should mark the lesson done and start a streak';
 
+  perform public.record_review('hello:1', 'good', 1, 2.55, 1, 0, current_date + 1);
+  assert jsonb_array_length(public.get_my_progress() -> 'reviews') = 1, 'a review must be stored and returned with the progress';
+  begin perform public.record_review('hello:bonus', 'good', 1, 2.5, 1, 0, current_date + 1); assert false, 'bonus steps cannot be reviewed';
+  exception when others then assert sqlerrm = 'unknown step', 'unexpected error: ' || sqlerrm; end;
+  begin insert into public.reviews (user_id, step_key, due, interval_days, ease, reps, lapses) values (uid, 'hello:2', current_date, 1, 2.5, 1, 0); assert false, 'direct writes to reviews must be denied';
+  exception when insufficient_privilege then null; end;
+
   select count(*) into lb from public.get_leaderboard('week', 10) where is_me and xp = 35;
   assert lb = 1, 'user must appear on the weekly leaderboard with 35 XP';
   begin insert into public.completions (user_id, step_key, xp) values (uid, 'hello:2', 15); assert false, 'direct writes to completions must be denied';

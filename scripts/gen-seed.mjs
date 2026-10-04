@@ -9,7 +9,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 globalThis.window = {};
 new Function("window", readFileSync(join(root, "lessons.js"), "utf8").replace(/^const py/m, "var py"))(globalThis.window);
 
-const XP = { quiz: 5, code: 15 }, BONUS = 20;
+const XP = { quiz: 5, predict: 5, code: 15 }, BONUS = 20;
 const rows = [];
 for (const unit of window.UNITS)
   for (const lesson of unit.lessons) {

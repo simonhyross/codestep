@@ -1,6 +1,6 @@
-# Setting up accounts, leaderboards and email reminders
+# Setting up accounts, reviews, leaderboards and email reminders
 
-Pythonic runs as a plain static site. Accounts are optional: until you configure a backend the app works
+Codestep runs as a plain static site. Accounts are optional: until you configure a backend the app works
 exactly as before (guest mode, progress saved in the browser). To turn accounts on you need a free
 [Supabase](https://supabase.com) project. This takes about 20 minutes.
 
@@ -49,8 +49,8 @@ Emails are **opt-in** (off by default) and every message carries a signed one-cl
 2. Install the [Supabase CLI](https://supabase.com/docs/guides/cli), then `supabase login` and `supabase link --project-ref <ref>`.
 3. Set the secrets (generate the two random values with `openssl rand -hex 32`):
    ```bash
-   supabase secrets set RESEND_API_KEY=... FROM_EMAIL="Pythonic <hello@yourdomain.com>" \
-     SITE_URL="https://<user>.github.io/pythonic/" CRON_SECRET=<random> UNSUBSCRIBE_SECRET=<random>
+   supabase secrets set RESEND_API_KEY=... FROM_EMAIL="Codestep <hello@yourdomain.com>" \
+     SITE_URL="https://<user>.github.io/codestep/" CRON_SECRET=<random> UNSUBSCRIBE_SECRET=<random>
    ```
 4. Deploy the functions (they authenticate with the secrets above instead of a JWT):
    ```bash
@@ -61,7 +61,7 @@ Emails are **opt-in** (off by default) and every message carries a signed one-cl
    ```sql
    create extension if not exists pg_cron;
    create extension if not exists pg_net;
-   select cron.schedule('pythonic-emails', '*/15 * * * *', $$
+   select cron.schedule('codestep-emails', '*/15 * * * *', $$
      select net.http_post(
        url := 'https://<project-ref>.supabase.co/functions/v1/send-reminders',
        headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', '<CRON_SECRET>'),
@@ -81,8 +81,9 @@ than localhost, and it is **not secure**; it only exists so the UI can be develo
 ## 5. Tests
 ```bash
 npm i --no-save @electric-sql/pglite
-node supabase/tests/schema.test.mjs                               # 50 checks: RLS, XP caps, streaks, leaderboard, email claims
+node supabase/tests/schema.test.mjs                               # 67 checks: RLS, XP caps, streaks, reviews, leaderboard, email claims
 node --experimental-strip-types supabase/tests/mail.test.mjs      # 22 checks: unsubscribe signatures and email templates
+supabase db query --linked -f supabase/tests/live-smoke.sql       # against your real project; expect an error that says SMOKE_OK
 ```
 The database tests run the real `schema.sql` in an in-process Postgres with a stubbed Supabase auth layer.
 
@@ -91,6 +92,7 @@ The database tests run the real `schema.sql` in an in-process Postgres with a st
 - **XP cannot be written by clients.** `record_step()` accepts only known lesson steps, caps XP per step, counts each step once and
   allows at most 20 steps a minute. The best possible score is therefore bounded by the curriculum. Lessons are still graded in the
   browser, so a determined user can claim steps without solving them: the leaderboard is competitive fun, not a proctored exam.
+- **Spaced-review schedules** are per-user rows that can only be written through validated functions (known steps, bounded values, rate limited). They never affect XP or the leaderboard.
 - **Leaderboard** exposes only username, avatar and XP. Users can opt out; emails and other profile fields never leave the database.
 - **Usernames** are validated (format, reserved words, 7-day change cooldown) in the database, not just the UI.
 - **Avatars** are re-encoded to 256×256 in the browser (stripping EXIF and GPS), limited to 512 KB and image types by Storage itself,
