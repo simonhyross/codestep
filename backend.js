@@ -88,7 +88,7 @@ function makeMock() {
   const bad = (message) => delay(fail(new Error(message)));
   let onAuthCb = null;
   const RESERVED = ["admin", "administrator", "root", "support", "help", "bit", "codestep", "moderator", "mod", "staff", "system", "official", "null", "undefined", "api", "www"];
-  const STEPS = {}; (window.UNITS || []).forEach(u => u.lessons.forEach(l => { l.steps.forEach((s, i) => { const x = { quiz: 5, predict: 5, code: 15 }[s.type]; if (x) STEPS[`${l.id}:${i}`] = { lesson: l.id, max: x, bonus: false }; }); STEPS[`${l.id}:bonus`] = { lesson: l.id, max: 20, bonus: true }; }));
+  const STEPS = {}; (window.UNITS || []).forEach(u => u.lessons.forEach(l => { l.steps.forEach((s, i) => { const x = s.probe ? 0 : { quiz: 5, predict: 5, code: 15, fill: 10, order: 10 }[s.type]; if (x) STEPS[`${l.id}:${i}`] = { lesson: l.id, max: x, bonus: false }; }); STEPS[`${l.id}:bonus`] = { lesson: l.id, max: 20, bonus: true }; }));
   const me = () => db.session && db.users.find(u => u.id === db.session.uid);
   const emit = (event) => { const u = me(); setTimeout(() => onAuthCb && onAuthCb(event, u ? toUser2(u) : null), 0); };
   const toUser2 = u => ({ id: u.id, email: u.email, created_at: u.created, providers: u.providers });

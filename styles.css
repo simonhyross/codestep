@@ -262,14 +262,18 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 /* mascot */
 .mascot { display: inline-block; flex: none; line-height: 0; animation: mascotfloat 3.4s ease-in-out infinite; }
 .mascot svg { width: 100%; height: auto; display: block; overflow: visible; fill: currentColor; stroke: none; stroke-width: 1; }
-.mascot .antenna { transform-box: fill-box; transform-origin: 50% 100%; animation: wag 3.2s ease-in-out infinite; }
+.mascot .ear { transform-box: fill-box; transform-origin: 50% 85%; animation: earwig 7s ease-in-out infinite; } .mascot .ear.r { animation-delay: -3s; }
 .mascot .eye { transform-box: fill-box; transform-origin: center; animation: blink 4.6s infinite; }
+/* the panda's black fur would vanish on navy, so on dark surfaces (dark theme, code panes) ears and paws get a lighter fill and a rim */
+:root[data-theme="dark"] .mascot .fur, .pane .mascot .fur { fill: #15245b; stroke: #7f97e6; }
+:root[data-theme="dark"] .mascot .paw, .pane .mascot .paw { stroke: #7f97e6; }
+:root[data-theme="dark"] .mascot .ear-in, .pane .mascot .ear-in { fill: #3a549f; }
 .mascot-cheer { animation: mascotjump .6s cubic-bezier(.3, 1.6, .5, 1) infinite alternate; }
 .mascot-oops { animation: mascotshake .5s 1; }
 @keyframes mascotfloat { 50% { transform: translateY(-4px); } }
 @keyframes mascotjump { to { transform: translateY(-12px) rotate(3deg); } }
 @keyframes mascotshake { 25% { transform: translateX(-5px) rotate(-3deg); } 75% { transform: translateX(5px) rotate(3deg); } }
-@keyframes wag { 50% { transform: rotate(3deg); } }
+@keyframes earwig { 0%, 90%, 100% { transform: rotate(0); } 93% { transform: rotate(-9deg); } 96% { transform: rotate(5deg); } }
 @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
 .mascotsay { display: flex; align-items: center; gap: 14px; }
 .bubble { position: relative; background: var(--surface); border: 2px solid var(--border-2); border-radius: 16px; padding: 10px 16px; font-weight: 700; font-size: 15.5px; color: var(--text); line-height: 1.4; }
@@ -691,3 +695,44 @@ body.viz-open { overflow: hidden; }
 .pop-lock b { color: var(--text); }
 @media (max-width: 560px) { .pop-foot .btn { width: 100%; justify-content: center; } }
 @media (max-width: 560px) { .lgrid { grid-template-columns: 1fr; } .upnext { flex-wrap: wrap; } .upnext .btn { width: 100%; } }
+
+/* lesson steps: try-it editor, fill in the blanks, put the lines in order */
+.tryit { margin: 0 0 14px; border-radius: 16px; overflow: hidden; background: var(--code-bg); border: 2px solid var(--yellow-d); --text: #eaf0ff; --text-2: #a9b7dd; --text-3: #8d9cc8; }
+.tryit-bar { display: flex; align-items: center; gap: 8px; padding: 7px 10px 7px 14px; background: var(--code-bar); color: var(--text-2); font-size: 12.5px; font-weight: 700; }
+.tryit-bar > span:first-child { display: inline-flex; align-items: center; gap: 6px; color: var(--yellow); }
+.tryit-bar svg { width: 15px; height: 15px; }
+.tryit-bar .sp { flex: 1; }
+.tryit-ed .CodeMirror { height: auto; min-height: 56px; }
+.tryit-ed .CodeMirror-scroll { min-height: 56px; }
+.tryit-out { padding: 10px 14px; border-top: 2px solid var(--code-line); background: var(--code-bar); color: #eaf0ff; font-family: var(--mono); font-size: 13.5px; min-height: 40px; }
+.tryit-out pre { margin: 0; padding: 0; background: none; font-size: inherit; color: inherit; white-space: pre-wrap; }
+.tryit-out.run { color: var(--text-3); font-family: var(--font); }
+.tryit-out .dim { color: var(--text-3); font-family: var(--font); }
+.tryit-out .errbox { font-size: 13px; }
+.hintbox + .hintbox { margin-top: 8px; }
+
+.fillcode { margin: 0; padding: 18px 18px 20px; background: var(--code-bg); font-family: var(--mono); font-size: 14.5px; line-height: 2.1; color: #eaf0ff; overflow: auto; flex: 1 1 55%; min-height: 160px; white-space: pre; tab-size: 4; }
+.blank { font: inherit; line-height: 1.4; color: #fff; background: #192b5e; border: 0; border-bottom: 2.5px solid var(--yellow); border-radius: 6px 6px 2px 2px; padding: 1px 6px; margin: 0 2px; text-align: center; min-width: 3ch; }
+.blank:focus { outline: none; background: #233773; box-shadow: 0 0 0 3px rgba(255, 201, 49, .35); }
+.blank.ok { border-bottom-color: var(--good); color: var(--good); }
+
+.parsons { flex: 1 1 55%; min-height: 200px; overflow: auto; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; --text: #eaf0ff; }
+.p-built { min-height: 56px; border: 2px dashed #32487f; border-radius: 14px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.p-empty { color: #8d9cc8; font-size: 14px; padding: 10px 8px; }
+.p-label { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8d9cc8; }
+.p-pool { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.pline { display: flex; align-items: stretch; border-radius: 10px; background: #192b5e; border: 2px solid #32487f; border-bottom-width: 4px; color: #eaf0ff; text-align: left; }
+.pline code { font-family: var(--mono); font-size: 14px; line-height: 1.5; white-space: pre; padding: 6px 12px; display: block; }
+.pline.pool { cursor: pointer; transition: transform .1s, border-color .1s; }
+.pline.pool:hover { border-color: var(--yellow); transform: translateY(-1px); }
+.pline.built { width: 100%; background: #233773; }
+.pl-text { flex: 1; text-align: left; color: inherit; cursor: pointer; border-radius: 8px; min-width: 0; overflow-x: auto; }
+.pl-text:hover { background: rgba(255, 255, 255, .06); }
+.pl-move { display: flex; flex-direction: column; justify-content: center; padding: 0 4px; }
+.pl-move button { font-size: 10px; line-height: 1; padding: 3px 7px; color: #a9b7dd; border-radius: 6px; cursor: pointer; }
+.pl-move button:hover:not(:disabled) { background: rgba(255, 255, 255, .12); color: #fff; }
+.pl-move button:disabled { opacity: .25; cursor: default; }
+.ide:has(.parsons) .ide-console, .ide:has(.fillcode) .ide-console { flex: 0 0 150px; min-height: 120px; }
+.parsons { flex: 1 1 0; min-height: 0; }
+.p-given { margin: 0; padding: 10px 14px; border-radius: 12px; background: #0b1638; border: 2px solid #22336e; font-size: 13.5px; line-height: 1.6; opacity: .9; }
+.parsons > * { flex: none; }

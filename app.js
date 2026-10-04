@@ -60,44 +60,66 @@ const DECO = [
   '<path d="M0 56l20-20 20 20 20-20 20 20 20-20v18l-20 20-20-20-20 20-20-20-20 20z"/>',
 ];
 
-/* ============================================================ mascot: Bit the snake */
+/* ============================================================ mascot: Byte the panda */
 function mascot(mood = "happy", size = 80, extra = "") {
   const ink = "#0b1b3a", Y = "#ffc931", B = "#2f6bff";
-  const look = { happy: [0, 1], think: [3, -3], oops: [0, 2], cheer: [0, 0] }[mood] || [0, 1];
+  const look = { happy: [0, 1], think: [2.4, -2.4], oops: [0, 2], cheer: [0, 0] }[mood] || [0, 1];
+  const line = (d, w = 3.2, c = ink) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const fur = (cx, cy, r, cls = "fur") => `<circle class="${cls}" cx="${cx}" cy="${cy}" r="${r - 0.8}" fill="${ink}" stroke="${ink}" stroke-width="1.6"/>`;   // .fur/.paw get a light rim on dark surfaces (styles.css)
   const eye = cx => mood === "cheer"
-    ? `<path d="M${cx - 9} 48 Q${cx} 36 ${cx + 9} 48" fill="none" stroke="${ink}" stroke-width="4.5" stroke-linecap="round"/>`
-    : `<g class="eye"><ellipse cx="${cx}" cy="46" rx="10.5" ry="11.5" fill="#fff" stroke="${ink}" stroke-width="3"/><circle cx="${cx + look[0]}" cy="${46 + look[1]}" r="5.6" fill="${ink}"/><circle cx="${cx + look[0] + 2}" cy="${46 + look[1] - 2}" r="1.9" fill="#fff"/></g>`;
-  const line = d => `<path d="${d}" fill="none" stroke="${ink}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+    ? line(`M${cx - 6} 55 Q${cx} 46 ${cx + 6} 55`, 3.6, "#fff")
+    : `<g class="eye"><ellipse cx="${cx}" cy="52" rx="6" ry="6.8" fill="#fff"/><circle cx="${cx + look[0]}" cy="${52 + look[1]}" r="3.8" fill="${ink}"/><circle cx="${cx + look[0] + 1.4}" cy="${52 + look[1] - 1.5}" r="1.3" fill="#fff"/><circle cx="${cx + look[0] - 1.3}" cy="${52 + look[1] + 1.6}" r=".7" fill="#fff"/></g>`;
+  const arm = (d, x, y, cls) => `${line(d, 14.5)}${line(d, 8.5, B)}${fur(x, y, 6.4, cls)}`;
+  const brows = {
+    think: line("M30 32 L46 35") + line("M74 30 L90 26"),
+    oops: line("M30 37 L46 30") + line("M90 37 L74 30"),
+  }[mood] || "";
   const mouth = {
-    happy: line("M47 63 Q60 77 73 63"),
-    cheer: `<path d="M45 61 Q60 86 75 61 Z" fill="${ink}" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M52 72 Q60 80 68 72 Q60 67 52 72Z" fill="#ff5a5f"/>`,
-    think: line("M52 68 Q61 64 70 69"),
-    oops: line("M49 72 Q60 61 71 72"),
+    happy: line("M52 68.4 Q56 75 60 68.6 Q64 75 68 68.4", 2.8),
+    cheer: `<path d="M50 67.5 Q60 87 70 67.5Z" fill="${ink}" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M54 74.5 Q60 70.5 66 74.5 Q60 80 54 74.5Z" fill="#ff5a5f"/>`,
+    think: line("M54 71.5 Q60 69 67 72.5", 2.8),
+    oops: line("M52 74 Q56 69.5 60 72 Q64 69.5 68 74", 2.8),
   }[mood] || "";
   const extras = {
-    think: line("M33 30 L50 34") + line("M70 28 L87 24") + `<text x="97" y="20" font-size="24" font-weight="800" fill="${B}" font-family="Bricolage Grotesque,Figtree,sans-serif">?</text>`,
-    oops: line("M35 36 L50 29") + line("M85 36 L70 29") + `<path d="M95 30 q7 10 0 15 q-7 -5 0 -15z" fill="#8dbbff" stroke="${ink}" stroke-width="2"/>`,
-    cheer: `<path d="M16 22 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="${B}"/><path d="M102 24 l2.5 5.5 5.5 2.5 -5.5 2.5 -2.5 5.5 -2.5 -5.5 -5.5 -2.5 5.5 -2.5z" fill="${B}"/>`,
+    think: `<text x="104" y="20" font-size="24" font-weight="800" fill="${B}" font-family="Bricolage Grotesque,Figtree,sans-serif">?</text>`,
+    oops: `<path d="M97 34 q7 10 0 15 q-7 -5 0 -15z" fill="#8dbbff" stroke="${ink}" stroke-width="2"/>`,
+    cheer: `<path d="M9 14 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="${B}"/><path d="M111 10 l2.5 5.5 5.5 2.5 -5.5 2.5 -2.5 5.5 -2.5 -5.5 -5.5 -2.5 5.5 -2.5z" fill="${B}"/>`,
   }[mood] || "";
-  const body = "M20 74 C20 40 38 24 60 24 C82 24 100 40 100 74 C100 100 84 114 60 114 C36 114 20 100 20 74Z";
+  const back = mood === "cheer" ? arm("M31 96 C16 97 7 80 9 54", 9, 54) + arm("M89 96 C104 97 113 80 111 54", 111, 54) : "";
+  const front = {
+    think: arm("M90 95 Q95 80 77 80", 77, 80, "paw"),
+    oops: arm("M32 95 Q22 91 27 78", 27, 78, "paw") + arm("M88 95 Q98 91 93 78", 93, 78, "paw"),
+  }[mood] || "";
   return `<span class="mascot mascot-${mood} ${extra}" style="width:${size}px" aria-hidden="true"><svg viewBox="0 0 120 130">
-    <ellipse cx="60" cy="125" rx="36" ry="4" fill="${ink}" opacity=".13"/>
-    <ellipse cx="44" cy="115" rx="11" ry="6.5" fill="${B}" stroke="${ink}" stroke-width="3.5"/><ellipse cx="76" cy="115" rx="11" ry="6.5" fill="${B}" stroke="${ink}" stroke-width="3.5"/>
-    <g class="antenna"><path d="M45 28 Q40 12 28 10" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="10" r="6" fill="${B}" stroke="${ink}" stroke-width="3.5"/>
-    <path d="M75 28 Q80 12 92 10" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/><circle cx="93" cy="10" r="6" fill="${B}" stroke="${ink}" stroke-width="3.5"/></g>
-    <path d="${body}" fill="${Y}" stroke="${ink}" stroke-width="4"/>
-    <ellipse cx="42" cy="40" rx="13" ry="5.5" fill="#fff" opacity=".55" transform="rotate(-28 42 40)"/>
-    <circle cx="31" cy="92" r="4.2" fill="${B}"/><circle cx="89" cy="92" r="4.2" fill="${B}"/><circle cx="60" cy="104" r="3.6" fill="${B}"/>
-    <g transform="translate(0 12)">${eye(44)}${eye(76)}
-    <circle cx="32" cy="62" r="5.5" fill="#ff7a59" opacity=".5"/><circle cx="88" cy="62" r="5.5" fill="#ff7a59" opacity=".5"/>
-    ${mouth}${extras}</g></svg></span>`;
+    <ellipse cx="60" cy="128.5" rx="44" ry="3.2" fill="${ink}" opacity=".14"/>
+    <g class="ear">${fur(26, 24, 12.8)}<circle class="ear-in" cx="27" cy="25.5" r="5.6" fill="#2b3f78"/></g>
+    <g class="ear r">${fur(94, 24, 12.8)}<circle class="ear-in" cx="93" cy="25.5" r="5.6" fill="#2b3f78"/></g>
+    <path d="M27 106 C25 93 28 85 40 81 L80 81 C92 85 95 93 93 106Z" fill="${B}" stroke="${ink}" stroke-width="3.6" stroke-linejoin="round"/>
+    <ellipse cx="60" cy="83" rx="25" ry="9" fill="#1b4fd6" stroke="${ink}" stroke-width="3.2"/>
+    ${line("M52.5 87 Q50.5 91 52 95", 5.4)}${line("M52.5 87 Q50.5 91 52 95", 2.4, "#fff")}${line("M67.5 87 Q69.5 90 68.4 93.5", 5.4)}${line("M67.5 87 Q69.5 90 68.4 93.5", 2.4, "#fff")}
+    ${back}
+    <path d="M60 15 C82 15 100 24 104 42 C107 52 107 62 100 70 C92 79 76 82 60 82 C44 82 28 79 20 70 C13 62 13 52 16 42 C20 24 38 15 60 15Z" fill="#fff" stroke="${ink}" stroke-width="3.8" stroke-linejoin="round"/>
+    <ellipse cx="38.5" cy="52" rx="13.4" ry="16.6" transform="rotate(24 38.5 52)" fill="${ink}"/><ellipse cx="81.5" cy="52" rx="13.4" ry="16.6" transform="rotate(-24 81.5 52)" fill="${ink}"/>
+    ${eye(38.5)}${eye(81.5)}
+    <circle cx="38.5" cy="52" r="9.8" fill="none" stroke="${Y}" stroke-width="3.2"/><circle cx="81.5" cy="52" r="9.8" fill="none" stroke="${Y}" stroke-width="3.2"/>
+    ${line("M48.3 49 Q60 43.6 71.7 49", 6.4)}${line("M48.3 49 Q60 43.6 71.7 49", 2.8, Y)}
+    <ellipse cx="37" cy="72.4" rx="4.8" ry="3.5" fill="#ff7a59" opacity=".55"/><ellipse cx="83" cy="72.4" rx="4.8" ry="3.5" fill="#ff7a59" opacity=".55"/>
+    <path d="M54.4 60 Q60 57.2 65.6 60 Q65 65.4 60 66.6 Q55 65.4 54.4 60Z" fill="${ink}" stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"/>
+    <ellipse cx="57.6" cy="59.6" rx="1.8" ry=".9" fill="#fff" opacity=".7"/>
+    ${line("M60 66.6 V68.5", 2.6)}${mouth}${brows}
+    ${front}
+    <rect x="19" y="119.5" width="82" height="8" rx="4" fill="#c2cff5" stroke="${ink}" stroke-width="3.2"/>
+    <rect x="27" y="97" width="66" height="25" rx="5.5" fill="#e6edff" stroke="${ink}" stroke-width="3.6"/>
+    ${line("M33 102.5 H41", 2, "#fff")}<rect x="51" y="100.5" width="18" height="18" rx="4.5" fill="${Y}" stroke="${ink}" stroke-width="2.4"/>
+    ${line("M57 106 L53.6 109.5 L57 113", 1.9)}${line("M63 106 L66.4 109.5 L63 113", 1.9)}${line("M61.5 105.5 L58.5 113.5", 1.9)}
+    ${extras}</svg></span>`;
 }
 const say = (kind, i) => { const a = I18N.list("say_" + kind); return a[(i * 7 + kind.length) % a.length]; };
 
 /* ============================================================ state */
 const KEY = "codestep:v1";
 const PROGRESS_KEYS = ["xp", "streak", "last", "daily", "done", "srs"];
-const defaults = { xp: 0, streak: 0, last: null, daily: {}, done: {}, srs: {}, theme: null, lang: null, goal: 50, unlockAll: false, pg: null };
+const defaults = { revs: {}, xp: 0, streak: 0, last: null, daily: {}, done: {}, srs: {}, theme: null, lang: null, goal: 50, unlockAll: false, pg: null };
 let S, signedIn = false, guestSaved = null;      // while signed in, progress mirrors the server and is never written to localStorage
 try { S = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { S = { ...defaults }; }
 const pickProgress = o => Object.fromEntries(PROGRESS_KEYS.map(k => [k, o[k]]));
@@ -141,15 +163,16 @@ const GRAPH = Tiers.build(UNITS);                                   // prerequis
 const isUnlocked = id => S.unlockAll || !!S.done[id] || Tiers.isUnlocked(GRAPH, id, S.done);
 const missingPrereqs = id => GRAPH.byId[id].needs.filter(p => !S.done[p]).map(p => lessonById(p).lesson.title);
 const currentLesson = () => { const id = Tiers.nextUp(GRAPH, S.done); return id ? lessonById(id) : null; };
-const STEP_XP = { quiz: 5, predict: 5, code: 15 };
-const lessonXp = l => l.steps.reduce((a, s) => a + (STEP_XP[s.type] || 0), 20);
+const STEP_XP = { quiz: 5, predict: 5, code: 15, fill: 10, order: 10 };
+const xpOf = step => (step.probe ? 0 : STEP_XP[step.type] || 0);          // a probe is an ungraded guess: no XP, no review
+const lessonXp = l => l.steps.reduce((a, s) => a + xpOf(s), 20);
 
 /* ============================================================ spaced review */
 const STEP_BY_KEY = {};                       // "loops:2" -> { lesson, step }
-FLAT.forEach(f => f.lesson.steps.forEach((step, i) => { if (STEP_XP[step.type]) STEP_BY_KEY[`${f.lesson.id}:${i}`] = { lesson: f.lesson, step }; }));
+FLAT.forEach(f => f.lesson.steps.forEach((step, i) => { if (xpOf(step)) STEP_BY_KEY[`${f.lesson.id}:${i}`] = { lesson: f.lesson, step }; }));
 const validReviews = () => Object.fromEntries(Object.entries(S.srs).filter(([k]) => STEP_BY_KEY[k]));
 const reviewStats = () => Srs.stats(validReviews(), dayKey());
-const kindOf = k => (STEP_BY_KEY[k].step.type === "code" ? "code" : "quiz");
+const kindOf = k => (["code", "fill", "order"].includes(STEP_BY_KEY[k].step.type) ? "code" : "quiz");   // heavier steps are rationed in a review session
 
 function recordReview(key, quality) {
   const item = Srs.next(S.srs[key], quality, dayKey());
@@ -300,6 +323,29 @@ function highlight(root) {
     }
   });
   $$(".codeblock[data-code]", root).forEach(el => { const t = el.dataset.code; el.textContent = ""; CodeMirror.runMode(t, "python", el); });
+  $$("pre[data-try]", root).forEach(tryIt);
+}
+/** <pre data-try><code>…</code></pre> becomes a small editor: change the code, press Run, see what happens. */
+function tryIt(pre) {
+  const code = pre.textContent.replace(/\n$/, "");
+  const box = document.createElement("div"); box.className = "tryit";
+  box.innerHTML = `<div class="tryit-bar"><span>${ico("bulb")} ${t("try_it")}</span><span class="sp"></span><button type="button" class="btn btn-ghost btn-sm" data-viz>${ico("eye")} ${t("viz_visualize")}</button><button type="button" class="btn btn-ghost btn-sm" data-reset>${t("reset")}</button><button type="button" class="btn btn-primary btn-sm" data-go>${ico("play", "fill")} ${t("run")}</button></div><div class="tryit-ed"></div><div class="tryit-out" aria-live="polite"></div>`;
+  pre.replaceWith(box);
+  const out = $(".tryit-out", box);
+  let busy = false;
+  const go = async () => {
+    if (busy) return; busy = true; out.className = "tryit-out run"; out.textContent = Py.status === "ready" ? t("running") : t("warming");
+    const r = normalizeRun(await Py.run(cm.getValue(), { timeout: 5000 })); busy = false;
+    if (r.cancelled) return;
+    out.className = "tryit-out";
+    if (r.timeout) { out.className = "tryit-out bad"; out.textContent = t("stopped_text", { n: 5 }); return; }
+    out.innerHTML = (r.out ? `<pre>${esc(r.out)}</pre>` : r.error ? "" : `<span class="dim">${t("no_output")}</span>`) + (r.error ? `<div class="errbox"><b>${esc(r.error.type)}</b>: ${esc(r.error.msg)}${r.error.hint ? `<div class="h">${esc(r.error.hint)}</div>` : ""}</div>` : "");
+  };
+  const cm = makeEditor($(".tryit-ed", box), { value: code, onRun: go });
+  $("[data-go]", box).onclick = go;
+  $("[data-reset]", box).onclick = () => { cm.setValue(code); out.textContent = ""; };
+  $("[data-viz]", box).onclick = () => Visualizer.open({ code: cm.getValue() });
+  setTimeout(() => { cm.refresh(); go(); }, 60);
 }
 const fmtMs = ms => ms < 1 ? `${(ms * 1000).toFixed(0)} µs` : ms < 1000 ? `${ms.toFixed(ms < 10 ? 2 : 1)} ms` : `${(ms / 1000).toFixed(2)} s`;
 const fmtKb = kb => kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(1)} MB`;
@@ -590,7 +636,7 @@ function renderStep() {
   if (!step) return L.review ? renderReviewFinish() : renderFinish();
   progressBar();
   const body = $("#l-body"); body.scrollTop = 0;
-  ({ learn: renderLearnStep, quiz: renderQuiz, predict: renderPredict, code: renderCodeStep })[step.type](step, body);
+  ({ learn: renderLearnStep, quiz: renderQuiz, predict: renderPredict, code: renderCodeStep, fill: renderFillStep, order: renderOrderStep })[step.type](step, body);
 }
 
 function renderLearnStep(step, body) {
@@ -641,61 +687,109 @@ function renderQuiz(step, body) {
 
 function renderPredict(step, body) {
   const norm = x => x.split("\n").map(l => l.trimEnd()).join("\n").trim();
+  const probe = !!step.probe;                                     // an ungraded guess made before the idea is taught
   let tries = 0, locked = false;
-  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">${t("predict_kicker")}</div><div class="mascotsay">${mascot("think", 64)}<div class="bubble">${say("quiz", L.i)}</div></div><h2>${t("predict_q")}</h2>
+  body.innerHTML = `<div class="l-wrap quiz"><div class="kicker">${t(probe ? "probe_kicker" : "predict_kicker")}</div><div class="mascotsay">${mascot("think", 64)}<div class="bubble">${probe ? t("probe_say") : say("quiz", L.i)}</div></div><h2>${step.ask ? esc(step.ask) : t("predict_q")}</h2>
     <pre class="codeblock" data-code="${esc(step.code)}"></pre>
     <textarea class="input predict-box" id="pred" rows="${Math.min(8, step.answer.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="${esc(t("predict_placeholder"))}"></textarea>
-    <div class="kbd-hint">${t("predict_hint")}</div></div>`;
+    <div class="kbd-hint">${probe ? t("probe_hint") : t("predict_hint")}</div></div>`;
   highlight(body);
   const box = $("#pred", body); box.focus();
   const idle = () => { foot(`<span class="grow"></span><button class="btn btn-primary" id="chk" ${box.value.trim() ? "" : "disabled"}>${t("check")} <span class="kbd">${MOD}↵</span></button>`); $("#chk").onclick = check; };
   const watch = `<button class="btn btn-ghost btn-sm" id="watch">${ico("eye")} ${t("predict_watch")}</button>`;
   const bindWatch = () => { const w = $("#watch"); if (w) w.onclick = () => Visualizer.open({ code: step.code }); };
+  const why = step.explain ? `<p>${esc(step.explain)}</p>` : "";
   box.oninput = idle;
   box.onkeydown = e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); if (!locked) check(); else $("#l-foot .btn-good, #l-foot .btn-bad")?.click(); } };
   function check() {
     if (locked || !box.value.trim()) return;
     const ok = norm(box.value) === norm(step.answer);
+    if (probe) {                                                  // always reveal; being wrong is the point
+      locked = true; box.readOnly = true;
+      setFoot(ok ? "good" : "", `<div class="fb"><span class="fb-mascot">${mascot(ok ? "cheer" : "think", 58)}</span><div class="fb-text"><h4>${t(ok ? "probe_right" : "probe_wrong")}</h4><p>${t("probe_it_prints")} <code>${esc(step.answer).split("\n").join(" ⏎ ")}</code></p>${why}</div></div>${watch}<button class="btn btn-primary" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      bindWatch(); $("#go").onclick = next; return;
+    }
     L.graded += tries === 0 ? 1 : 0;
     if (ok) {
       locked = true; box.readOnly = true; if (tries === 0) L.first++;
       reportResult(step, tries === 0 ? "good" : "hard");
       const g = gain(tries === 0 ? 5 : 2);
-      setFoot("good", `<div class="fb"><span class="fb-pip">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("predict_right")}${g ? ` +${g} XP` : ""}</h4></div></div>${watch}<button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("good", `<div class="fb"><span class="fb-mascot">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("predict_right")}${g ? ` +${g} XP` : ""}</h4>${why}</div></div>${watch}<button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       bindWatch(); $("#go").onclick = next; return;
     }
     tries++;
     if (tries >= 2) {
       locked = true; box.readOnly = true; reportResult(step, "again");
-      setFoot("bad", `<div class="fb"><span class="fb-pip">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("predict_answer")}</h4><p><code>${esc(step.answer).split("\n").join(" ⏎ ")}</code></p></div></div>${watch}<button class="btn btn-bad" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+      setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("predict_answer")}</h4><p><code>${esc(step.answer).split("\n").join(" ⏎ ")}</code></p>${why}</div></div>${watch}<button class="btn btn-bad" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
       bindWatch(); $("#go").onclick = next; return;
     }
-    setFoot("bad", `<div class="fb"><span class="fb-pip">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${t("predict_wrong")}</p></div></div>${watch}<button class="btn btn-bad" id="again">${t("try_again")} <span class="kbd">${MOD}↵</span></button>`);
+    setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${t("predict_wrong")}</p></div></div>${watch}<button class="btn btn-bad" id="again">${t("try_again")} <span class="kbd">${MOD}↵</span></button>`);
     bindWatch(); $("#again").onclick = () => { idle(); box.focus(); };
   }
   idle();
 }
 
+/* ---- steps whose answer is a program (code, fill, order) share hints and grading ---- */
+const hintsOf = step => [].concat(step.hint || []);
+/** Hints come one at a time, gentlest first. Returns the button label and a reveal() that shows the next one. */
+function hintLadder(step, body, st) {
+  const hs = hintsOf(step);
+  return {
+    count: hs.length,
+    label: () => hs.length > 1 ? `${t("hint")} ${Math.min(st.hintsShown + 1, hs.length)}/${hs.length}` : t("hint"),
+    done: () => st.hintsShown >= hs.length,
+    reveal() {
+      if (st.hintsShown >= hs.length) return;
+      st.hintsShown++; st.hintUsed = true;
+      $("#hintslot", body).innerHTML = hs.slice(0, st.hintsShown).map((h, i) => `<div class="hintbox">${mascot("think", 44)}<span><b>${hs.length > 1 ? t("hint_n", { n: i + 1 }) : t("hint_from")}</b> ${esc(h)}</span></div>`).join("");
+    },
+  };
+}
+/** Reports a graded run and shows the feedback bar. st = { attempts, hintUsed, shown, graded, passed }. */
+function gradeResult(step, st, r, { again, solution }) {
+  const full = STEP_XP[step.type], mid = Math.round(full * 2 / 3), low = Math.round(full / 3);
+  st.attempts++;
+  if (r.passed) {
+    st.passed = true;
+    reportResult(step, st.shown ? "again" : st.attempts === 1 && !st.hintUsed ? "good" : "hard");
+    if (!st.graded) { st.graded = true; L.graded++; if (st.attempts === 1 && !st.hintUsed && !st.shown) L.first++; }
+    const g = gain(st.shown ? 0 : st.attempts === 1 && !st.hintUsed ? full : st.hintUsed || st.attempts > 2 ? low : mid);
+    setFoot("good", `<div class="fb"><span class="fb-mascot">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("brilliant")}${g ? ` +${g} XP` : ""}</h4><p>${step.explain ? esc(step.explain) : t("all_tests")}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
+    $("#go").onclick = next; return true;
+  }
+  if (!st.graded) { st.graded = true; L.graded++; }
+  const msg = r.timeout ? t("too_long") : r.error ? t("has_error") : (r.message || t("not_right"));
+  const canShow = st.attempts >= (step.boss ? 4 : 3) && !st.shown;
+  setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(msg)}</p></div></div>${canShow ? `<button class="btn btn-ghost btn-sm" id="sol">${t("show_solution")}</button>` : ""}<button class="btn btn-bad" id="again">${t("try_again")}</button>`);
+  $("#again").onclick = again;
+  const sol = $("#sol"); if (sol) sol.onclick = () => { st.shown = true; solution(); toast(t("sol_loaded")); };
+  return false;
+}
+const taskCard = (step, kickerKey, mascotKind = "happy") => `<div class="card"><div class="kicker">${t(kickerKey)}</div><h2>${esc(step._title || L.lesson.title)}</h2><div class="mascotsay">${mascot(mascotKind, 54)}<div class="bubble">${say("code", L.i)}</div></div><div class="prose" style="margin-top:14px">${step.prompt}</div></div><div id="hintslot"></div>`;
+const progFoot = (hl, extra = "") => `${hl.count ? `<button class="btn btn-ghost btn-sm" id="hint" ${hl.done() ? "disabled" : ""}>${ico("bulb")} ${hl.label()}</button>` : ""}${extra}<span class="grow"></span><button class="btn btn-ghost" id="run">${ico("play", "fill")} ${t("run")}</button><button class="btn btn-primary" id="chk">${t("check")} <span class="kbd">${MOD}↵</span></button>`;
+
 function renderCodeStep(step, body) {
   const token = ++L.token;
-  let attempts = 0, hintUsed = false, shown = false, busy = false, graded = false, passed = false;
+  const st = { attempts: 0, hintUsed: false, hintsShown: 0, shown: false, graded: false, passed: false };
+  let busy = false;
+  const fix = step.mode === "fix", boss = !!step.boss;
+  const hl = hintLadder(boss ? { ...step, hint: [] } : step, body, st);
   body.innerHTML = `<div class="l-wrap wide"><div class="code-step">
-    <div class="task"><div class="card"><div class="kicker">${t("challenge")}</div><h2>${esc(step._title || L.lesson.title)}</h2><div class="mascotsay">${mascot("happy", 54)}<div class="bubble">${say("code", L.i)}</div></div><div class="prose" style="margin-top:14px">${step.prompt}</div></div><div id="hintslot"></div></div>
+    <div class="task">${taskCard(step, boss ? "boss_kicker" : fix ? "fix_kicker" : "challenge")}</div>
     <div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>solution.py</span><span class="sp"></span></div><div class="ide-ed"></div></div></div></div>`;
   highlight($(".task", body));
   const cons = makeConsole((l, c) => jumpTo(cm)(l, c));
   $(".ide", body).appendChild(cons.el);
-  const cm = makeEditor($(".ide-ed", body), { value: step.starter, onRun: () => (passed ? next() : check()), onProblems: cons.problems });
+  const cm = makeEditor($(".ide-ed", body), { value: step.starter, onRun: () => (st.passed ? next() : check()), onProblems: cons.problems });
   setTimeout(() => cm.focus(), 50);
 
   const controls = () => {
-    foot(`<button class="btn btn-ghost btn-sm" id="hint">${ico("bulb")} ${t("hint")}</button><button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button><button class="btn btn-ghost btn-sm" id="viz">${ico("eye")} ${t("viz_visualize")}</button><span class="grow"></span><button class="btn btn-ghost" id="run">${ico("play", "fill")} ${t("run")}</button><button class="btn btn-primary" id="chk">${t("check")} <span class="kbd">${MOD}↵</span></button>`);
-    $("#hint").onclick = () => { hintUsed = true; $("#hintslot", body).innerHTML = `<div class="hintbox">${mascot("think", 44)}<span><b>${t("hint_from")}</b> ${esc(step.hint)}</span></div>`; };
+    foot(progFoot(hl, `<button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button><button class="btn btn-ghost btn-sm" id="viz">${ico("eye")} ${t("viz_visualize")}</button>`));
+    const h = $("#hint"); if (h) h.onclick = () => { hl.reveal(); controls(); };
     $("#reset").onclick = () => { cm.setValue(step.starter); cm.focus(); };
     $("#viz").onclick = () => Visualizer.open({ code: cm.getValue() });
     $("#run").onclick = () => exec(false);
     $("#chk").onclick = () => check();
-    if (hintUsed) $("#hint").disabled = true;
   };
   async function exec(withTests) {
     if (busy) return null; busy = true;
@@ -709,20 +803,123 @@ function renderCodeStep(step, body) {
   }
   async function check() {
     const r = await exec(true); if (!r) return;
-    attempts++;
-    if (r.passed) {
-      passed = true;
-      reportResult(step, shown ? "again" : attempts === 1 && !hintUsed ? "good" : "hard");
-      if (!graded) { graded = true; L.graded++; if (attempts === 1 && !hintUsed && !shown) L.first++; }
-      const g = gain(shown ? 0 : attempts === 1 && !hintUsed ? 15 : hintUsed || attempts > 2 ? 5 : 10);
-      setFoot("good", `<div class="fb"><span class="fb-mascot">${mascot("cheer", 58)}</span><div class="fb-text"><h4>${t("brilliant")}${g ? ` +${g} XP` : ""}</h4><p>${t("all_tests")}</p></div></div><button class="btn btn-good" id="go">${t("cont")} <span class="kbd">${MOD}↵</span></button>`);
-      $("#go").onclick = next; return;
-    }
-    if (!graded) { graded = true; L.graded++; }
-    const msg = r.timeout ? t("too_long") : r.error ? t("has_error") : (r.message || t("not_right"));
-    setFoot("bad", `<div class="fb"><span class="fb-mascot">${mascot("oops", 58)}</span><div class="fb-text"><h4>${t("not_quite")}</h4><p>${esc(msg)}</p></div></div>${attempts >= 3 && !shown ? `<button class="btn btn-ghost btn-sm" id="sol">${t("show_solution")}</button>` : ""}<button class="btn btn-bad" id="again">${t("try_again")}</button>`);
-    $("#again").onclick = () => { controls(); cm.focus(); };
-    const sol = $("#sol"); if (sol) sol.onclick = () => { shown = true; cm.setValue(step.solution); controls(); toast(t("sol_loaded")); };
+    gradeResult(step, st, r, { again: () => { controls(); cm.focus(); }, solution: () => { cm.setValue(step.solution); controls(); } });
+  }
+  controls();
+  if (fix) exec(false);                                           // show the symptom first: what the broken program does
+}
+
+/** Fill in the blanks: the template has ___ markers; the filled-in program is graded by running the tests. */
+function renderFillStep(step, body) {
+  const token = ++L.token;
+  const st = { attempts: 0, hintUsed: false, hintsShown: 0, shown: false, graded: false, passed: false };
+  const parts = step.template.split("___"), hl = hintLadder(step, body, st);
+  let busy = false;
+  const seg = text => { let h = ""; CodeMirror.runMode(text, "python", (txt, style) => { h += style ? `<span class="cm-${style}">${esc(txt)}</span>` : esc(txt); }); return h; };
+  const code = parts.map((p, i) => seg(p) + (i < step.blanks.length ? `<input class="blank" data-i="${i}" size="${Math.max(3, step.blanks[i].length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="${esc(t("blank_n", { n: i + 1 }))}">` : "")).join("");
+  body.innerHTML = `<div class="l-wrap wide"><div class="code-step">
+    <div class="task">${taskCard(step, "fill_kicker")}</div>
+    <div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>solution.py</span><span class="sp"></span></div><pre class="fillcode">${code}</pre></div></div></div>`;
+  highlight($(".task", body));
+  const cons = makeConsole(() => {}); $(".ide", body).appendChild(cons.el);
+  const inputs = $$(".blank", body);
+  const assemble = () => parts.map((p, i) => p + (i < step.blanks.length ? inputs[i].value.trim() : "")).join("");
+  const filled = () => inputs.every(i => i.value.trim());
+  const refresh = () => { const c = $("#chk"); if (c) c.disabled = !filled() || busy; };
+  const controls = () => {
+    foot(progFoot(hl, `<button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button>`));
+    const h = $("#hint"); if (h) h.onclick = () => { hl.reveal(); controls(); };
+    $("#reset").onclick = () => { inputs.forEach(i => { i.value = ""; i.classList.remove("ok"); i.readOnly = false; }); inputs[0].focus(); refresh(); };
+    $("#run").onclick = () => exec(false);
+    $("#chk").onclick = () => check();
+    refresh();
+  };
+  inputs.forEach((inp, k) => {
+    inp.oninput = refresh;
+    inp.onkeydown = e => {
+      if (e.key === "Enter") { e.preventDefault(); if (e.metaKey || e.ctrlKey || k === inputs.length - 1) { if (st.passed) next(); else if (filled()) check(); } else inputs[k + 1].focus(); }
+    };
+  });
+  setTimeout(() => inputs[0] && inputs[0].focus(), 50);
+  async function exec(withTests) {
+    if (busy) return null; busy = true;
+    $$("#l-foot button").forEach(b => (b.disabled = true)); cons.running();
+    const r = await Py.run(assemble(), { tests: withTests ? step.tests : null, timeout: 8000 });
+    busy = false;
+    if (token !== L?.token || r.cancelled) return null;
+    const n = normalizeRun(r); cons.result(n);
+    if (!withTests) controls();
+    return n;
+  }
+  async function check() {
+    if (!filled()) return;
+    const r = await exec(true); if (!r) return;
+    const ok = gradeResult(step, st, r, {
+      again: () => { controls(); inputs[0].focus(); },
+      solution: () => { inputs.forEach((i, k) => (i.value = step.blanks[k])); controls(); },
+    });
+    if (ok) inputs.forEach(i => { i.classList.add("ok"); i.readOnly = true; });
+  }
+  controls();
+}
+
+/** Put the lines in order (Parsons problem): indentation is fixed, the order is yours to find. */
+function renderOrderStep(step, body) {
+  const token = ++L.token;
+  const st = { attempts: 0, hintUsed: false, hintsShown: 0, shown: false, graded: false, passed: false };
+  const hl = hintLadder(step, body, st);
+  const all = [...step.lines, ...(step.distractors || [])].map((text, id) => ({ id, text }));
+  let pool = all.slice(), built = [], busy = false;
+  const same = (a, b) => a.every((x, i) => x === b[i]);
+  do { pool.sort(() => Math.random() - .5); } while (pool.length > 1 && same(pool.map(l => l.id), all.map(l => l.id)));
+  body.innerHTML = `<div class="l-wrap wide"><div class="code-step">
+    <div class="task">${taskCard(step, "order_kicker")}</div>
+    <div class="ide"><div class="ide-bar"><div class="dots"><i></i><i></i><i></i></div><span>program.py</span><span class="sp"></span></div>
+      <div class="parsons">${step.given ? `<pre class="p-given codeblock" data-code="${esc(step.given.trimEnd())}"></pre>` : ""}<div class="p-built" id="built"></div><div class="p-label">${t("order_pool")}</div><div class="p-pool" id="pool"></div></div></div></div></div>`;
+  highlight($(".task", body)); highlight($(".parsons", body));
+  const cons = makeConsole(() => {}); $(".ide", body).appendChild(cons.el);
+  const lineHtml = text => { let h = ""; CodeMirror.runMode(text, "python", (txt, style) => { h += style ? `<span class="cm-${style}">${esc(txt)}</span>` : esc(txt); }); return h || "&nbsp;"; };
+  const paint = () => {
+    $("#built", body).innerHTML = built.length ? built.map((l, k) => `<div class="pline built" data-id="${l.id}"><button class="pl-text" data-take="${l.id}" title="${esc(t("order_remove"))}"><code>${lineHtml(l.text)}</code></button><span class="pl-move"><button data-up="${k}" aria-label="${esc(t("order_up"))}" ${k ? "" : "disabled"}>▲</button><button data-down="${k}" aria-label="${esc(t("order_down"))}" ${k < built.length - 1 ? "" : "disabled"}>▼</button></span></div>`).join("") : `<div class="p-empty">${t("order_empty")}</div>`;
+    $("#pool", body).innerHTML = pool.map(l => `<button class="pline pool" data-put="${l.id}"><code>${lineHtml(l.text)}</code></button>`).join("") || `<span class="dim">${t("order_all_used")}</span>`;
+    const c = $("#chk"); if (c) c.disabled = !built.length || busy;
+  };
+  body.onclick = e => {
+    if (st.passed) return;
+    const put = e.target.closest("[data-put]"), take = e.target.closest("[data-take]"), up = e.target.closest("[data-up]"), down = e.target.closest("[data-down]");
+    if (put) { const i = pool.findIndex(l => l.id === +put.dataset.put); built.push(...pool.splice(i, 1)); }
+    else if (take) { const i = built.findIndex(l => l.id === +take.dataset.take); pool.push(...built.splice(i, 1)); pool.sort((a, b) => a.id - b.id); }
+    else if (up) { const k = +up.dataset.up; [built[k - 1], built[k]] = [built[k], built[k - 1]]; }
+    else if (down) { const k = +down.dataset.down; [built[k + 1], built[k]] = [built[k], built[k + 1]]; }
+    else return;
+    paint();
+  };
+  const code = () => (step.given ? step.given.trimEnd() + "\n" : "") + built.map(l => l.text).join("\n");
+  const controls = () => {
+    foot(progFoot(hl, `<button class="btn btn-ghost btn-sm" id="reset">${t("reset")}</button>`));
+    const h = $("#hint"); if (h) h.onclick = () => { hl.reveal(); controls(); };
+    $("#reset").onclick = () => { pool = all.slice().sort(() => Math.random() - .5); built = []; paint(); };
+    $("#run").onclick = () => exec(false);
+    $("#chk").onclick = () => check();
+    paint();
+  };
+  async function exec(withTests) {
+    if (busy || !built.length) return null; busy = true;
+    $$("#l-foot button").forEach(b => (b.disabled = true)); cons.running();
+    const r = await Py.run(code(), { tests: withTests ? step.tests : null, timeout: 8000 });
+    busy = false;
+    if (token !== L?.token || r.cancelled) return null;
+    const n = normalizeRun(r); cons.result(n);
+    if (!withTests) controls();
+    return n;
+  }
+  async function check() {
+    const r = await exec(true); if (!r) return;
+    gradeResult(step, st, r, {
+      again: controls,
+      solution: () => { const used = new Set(); built = step.lines.map(text => { const l = all.find(x => x.text === text && !used.has(x.id)); used.add(l.id); return l; }); pool = all.filter(l => !used.has(l.id)); controls(); },
+    });
+    if (st.passed) paint();
   }
   controls();
 }
@@ -858,7 +1055,18 @@ function setLanguage(l, silent) {
 }
 I18N.setLang(S.lang || I18N.detect());
 offRuntime && offRuntime(); offRuntime = paintRuntime();
-applyTheme(); seedReviews(); route(); updateDueBadge();
+/** A lesson whose `rev` was bumped has new steps at its old indexes, so review items saved for the old ones are dropped. */
+function migrateRevs() {
+  let changed = false;
+  FLAT.forEach(({ lesson }) => {
+    const want = lesson.rev || 1;
+    if ((S.revs[lesson.id] || 1) >= want) return;
+    Object.keys(S.srs).filter(k => k.startsWith(lesson.id + ":")).forEach(k => delete S.srs[k]);
+    S.revs[lesson.id] = want; changed = true;
+  });
+  if (changed) save();
+}
+applyTheme(); migrateRevs(); seedReviews(); route(); updateDueBadge();
 window.App = {
   get S() { return S; }, get signedIn() { return signedIn; }, Py, save, view, modal, toast, t, tn, esc, ico, mascot, MOD, $, $$, hooks, routes,
   applyTheme, setLanguage, applyServerProgress, seedReviews, updateDueBadge, enterAccount, leaveAccount, clearGuestProgress, guestDoneLessons,

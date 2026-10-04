@@ -9,7 +9,9 @@ The first course is Python (24 lessons: basics, collections, data structures, al
   with arrows from variables to the objects they point at. Available in the playground, on every coding exercise and on the code samples in lessons.
 - **Spaced review.** Every exercise you finish comes back after a growing gap (1 day, 3 days, about a week, ...) just before you'd forget it.
   Get one wrong and it returns sooner. A daily review takes a few minutes and counts for your streak.
-- **Predict the output.** Read code, type what it prints, then watch it run to see why. Each wrong answer in a quiz also explains *why* it is wrong.
+- **Learn by doing, not by reading.** Every lesson follows the same ladder: take a guess before the idea is taught, tweak a live example,
+  fill in the blanks, put shuffled lines in order, predict the output, fix a broken program, then write it yourself and finish with a
+  no-hints boss challenge. Hints come one at a time, gentlest first, and each wrong answer in a quiz explains *why* it is wrong.
 - **Real coding.** You write code, it runs in your browser (Pyodide in a Web Worker, runaway loops are stopped) and is graded by hidden tests,
   with a built-in linter for style and common mistakes.
 - Duolingo-style path with XP, streaks and a daily goal, a playground with timing and memory profiling, light and dark mode,
@@ -62,9 +64,17 @@ node --experimental-strip-types supabase/tests/mail.test.mjs
 
 ## Adding a lesson
 
-Add an object to a unit's `lessons` array in `lessons.js`, with `needs: [ids of lessons it builds on]` (it appears in the first row after all of them). Step types: `learn` (HTML; add `data-run` to a `<pre>` to give it a
-"Watch it run" button), `quiz` (with a reason for every wrong option), `predict` (`code` and the exact `answer`) and `code`
-(`starter`, `solution`, `hint`, `tests`). Test code runs after the learner's code and can use `output`, `source`,
-`run_with(**vars)` (re-run with different top-level variables) and `timed(fn, *args)`.
-Append new steps to the end of a lesson (step numbers identify progress), then run `node scripts/gen-seed.mjs` and apply
+Add an object to a unit's `lessons` array in `lessons.js`, with `needs: [ids of lessons it builds on]` and a `level` (1 to 4). Step types:
+
+- `learn`: HTML. `<pre data-try>` becomes an editable example with Run and Visualize buttons.
+- `predict`: `code` and the exact `answer`; optional `explain` and `ask`. Add `probe: true` for an ungraded guess made *before* the idea is taught (no XP, never reviewed).
+- `quiz`: a reason for every wrong option.
+- `code`: `starter`, `solution`, `hint` (a string, or an array of up to three hints, gentlest first), `tests`. Add `mode: "fix"` to start from a broken program whose symptom is shown on load, or `boss: true` for a no-hints challenge. Optional `explain` is shown on success.
+- `fill`: `template` with `___` blanks, `blanks` (the reference answers), `tests`, `hint`. The filled-in program is graded by the tests.
+- `order`: `lines` (the right order, indentation included), optional `distractors` (lines that must break the program) and `given` (read-only code placed above the puzzle), `tests`, `hint`.
+
+Test code runs after the learner's code and can use `output`, `source`, `run_with(**vars)` (re-run with different top-level variables)
+and `timed(fn, *args)` (returns `(result, seconds)`). `tests/lessons_test.py` checks that the reference solution passes, wrong blanks and a rotated order fail, and
+every distractor breaks the program.
+Step numbers identify progress and review items, so when you rewrite a lesson bump its `rev` (the app then forgets local review items for the old steps); otherwise only append. Then run `node scripts/gen-seed.mjs` and apply
 `supabase/seed_steps.sql` so the server knows the new steps.
