@@ -31,7 +31,6 @@ The settings below are in `supabase/config.toml`. Review and apply them with **`
 | Email confirmations | **on** | stops sign-ups with other people's addresses |
 | Password policy | minimum length **10**, lower + upper + digits | matches the client-side checks |
 | Secure password change | on | requires a recent login before changing the password |
-| Multi-factor → TOTP | enroll + verify enabled | powers the 2FA switch in Settings |
 | Site URL / Redirect URLs | your Pages URL (plus `http://localhost:5180/`) | blocks open-redirect abuse |
 | Leaked password protection | on (**Pro plan only**, dashboard) | rejects passwords found in breach lists |
 | Attack protection → CAPTCHA | optional (dashboard) | stops bot sign-ups (needs a small client change) |
@@ -76,13 +75,13 @@ retry or overlapping run can never email someone twice.
 
 ## 4. Try it locally without a backend
 Run `python3 -m http.server 5180` and open `http://localhost:5180/?mock=1`. This enables a **demo backend that simulates accounts inside
-your browser** (sign-up, 2FA code `123456`, leaderboard with fake players, settings). It is deliberately disabled on any hostname other
+your browser** (sign-up, leaderboard with fake players, settings). It is deliberately disabled on any hostname other
 than localhost, and it is **not secure**; it only exists so the UI can be developed and demoed without a server.
 
 ## 5. Tests
 ```bash
 npm i --no-save @electric-sql/pglite
-node supabase/tests/schema.test.mjs                               # 63 checks: RLS, XP caps, streaks, leaderboard, 2FA, email claims
+node supabase/tests/schema.test.mjs                               # 50 checks: RLS, XP caps, streaks, leaderboard, email claims
 node --experimental-strip-types supabase/tests/mail.test.mjs      # 22 checks: unsubscribe signatures and email templates
 ```
 The database tests run the real `schema.sql` in an in-process Postgres with a stubbed Supabase auth layer.
@@ -92,7 +91,6 @@ The database tests run the real `schema.sql` in an in-process Postgres with a st
 - **XP cannot be written by clients.** `record_step()` accepts only known lesson steps, caps XP per step, counts each step once and
   allows at most 20 steps a minute. The best possible score is therefore bounded by the curriculum. Lessons are still graded in the
   browser, so a determined user can claim steps without solving them: the leaderboard is competitive fun, not a proctored exam.
-- **2FA is enforced by the database**: once a user has a verified authenticator, a password-only session cannot read or change anything.
 - **Leaderboard** exposes only username, avatar and XP. Users can opt out; emails and other profile fields never leave the database.
 - **Usernames** are validated (format, reserved words, 7-day change cooldown) in the database, not just the UI.
 - **Avatars** are re-encoded to 256×256 in the browser (stripping EXIF and GPS), limited to 512 KB and image types by Storage itself,

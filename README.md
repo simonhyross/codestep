@@ -24,7 +24,7 @@ It needs an internet connection on first load (Pyodide, CodeMirror and fonts com
 ## Accounts, leaderboards and settings (optional)
 
 Sign in with email or Google, keep progress across devices, climb a weekly and all-time leaderboard, and manage a profile
-(username, avatar, language, theme, daily goal, reminder and summary emails, 2FA, data export and account deletion).
+(username, avatar, language, theme, daily goal, reminder and summary emails, data export and account deletion).
 The interface is available in English, Spanish, German, French and Swedish (lessons stay in English).
 
 It needs a free Supabase project; without one the app runs as a guest-only site exactly as before.

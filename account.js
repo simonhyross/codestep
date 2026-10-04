@@ -5,7 +5,7 @@ const { t, tn, esc, ico, pip, view, modal, toast, $, $$, MOD } = App;
 const B = window.Backend;
 const enabled = B && B.mode !== "none";
 
-const Account = { phase: enabled ? "loading" : "guest", user: null, profile: null, factorId: null };
+const Account = { phase: enabled ? "loading" : "guest", user: null, profile: null };
 window.Account = Account;
 Account.name = () => (Account.phase === "ready" && Account.profile ? Account.profile.display_name || Account.profile.username : null);
 Account.onThemeChanged = th => { if (Account.phase === "ready") save({ theme: th || "system" }); };
@@ -92,7 +92,7 @@ async function onAuth(event, user) {
   if (event === "PASSWORD_RECOVERY") { Account.user = user; Account.phase = "recovery"; go("#/auth/recovery"); return; }
   if (!user) {
     const was = Account.phase === "ready";
-    Account.user = null; Account.profile = null; Account.factorId = null;
+    Account.user = null; Account.profile = null;
     App.leaveAccount(); queue = []; Account.phase = "guest";
     paintChip();
     if (was) { toast(t("signed_out")); go("#/learn"); } else App.refresh();
@@ -101,8 +101,6 @@ async function onAuth(event, user) {
   if (Account.phase === "recovery") { Account.user = user; return; }
   if (Account.phase === "ready" && Account.user && Account.user.id === user.id) { Account.user = user; return; }
   Account.user = user;
-  const a = await B.aal();
-  if (a.needsMfa) { Account.phase = "mfa"; Account.factorId = a.factorId; paintChip(); if (!hasRoute("auth")) go("#/auth/mfa"); else App.refresh(); return; }
   await loadAccount();
 }
 
@@ -179,7 +177,6 @@ function renderAuth(mode = "signin") {
   document.title = t("sign_in") + " · Pythonic";
   if (!enabled) { view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${pip("think", 90)}<h1>${t("not_configured")}</h1><a class="btn btn-primary" href="#/learn">${t("back_to_path")}</a></div></div>`; return; }
   if (Account.phase === "ready" && mode !== "recovery") { go("#/settings"); return; }
-  if (Account.phase === "mfa") mode = "mfa";
   if (Account.phase === "recovery") mode = "recovery";
   const demo = B.demo ? `<div class="banner demo">${t("demo_banner")}</div>` : "";
   const google = `<button class="btn btn-ghost btn-block gbtn" type="button" id="g-btn"><svg viewBox="0 0 24 24" width="20" height="20" style="stroke:none"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 01-2.2 3.3v2.7h3.6c2.1-1.9 3.2-4.800 3.2-8z"/><path fill="#34A853" d="M12 23c3 0 5.500-1 7.300-2.700l-3.600-2.700c-1 .7-2.300 1.100-3.700 1.100-2.900 0-5.300-1.900-6.200-4.500H2.100v2.800A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.800 14.200a6.600 6.600 0 010-4.400V7H2.100a11 11 0 000 10z"/><path fill="#EA4335" d="M12 5.400c1.600 0 3.100.6 4.200 1.700l3.200-3.200A11 11 0 002.100 7l3.700 2.800C6.700 7.300 9.100 5.400 12 5.400z"/></svg>${t("continue_google")}</button><div class="or"><span>${t("or")}</span></div>`;
@@ -201,13 +198,10 @@ function renderAuth(mode = "signin") {
   else if (mode === "recovery") body = `<h1>${t("reset_title")}</h1>
     <form id="f" novalidate>${field("pw", t("new_password"), pwInput("pw", "new-password"), `<div id="pw-s">${strengthHtml("", {})}</div>`)}<div class="err" id="err" role="alert"></div>
     <button class="btn btn-primary btn-block" type="submit" id="go">${t("set_password")}</button></form>`;
-  else if (mode === "mfa") body = `<h1>${t("mfa_title")}</h1><p class="sub">${t("mfa_text")}</p>${B.demo ? `<div class="banner demo">Demo code: 123456</div>` : ""}
-    <form id="f" novalidate>${field("code", t("mfa_code"), `<input class="input code" id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required>`)}<div class="err" id="err" role="alert"></div>
-    <button class="btn btn-primary btn-block" type="submit" id="go">${t("verify")}</button></form><div class="links"><a href="#/auth/signin" id="mfa-out">${t("sign_out")}</a></div>`;
   else if (mode === "confirm") body = `<h1>${t("check_inbox")}</h1><p class="sub">${t("check_inbox_text", { email: `<b>${esc(authNotice || "")}</b>` })}</p>
     <button class="btn btn-ghost btn-block" id="resend">${t("resend")}</button><div class="err good" id="err" role="status"></div><div class="links"><a href="#/auth/signin">${t("sign_in")}</a></div>`;
 
-  view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${demo}<div class="auth-pip">${pip(mode === "mfa" ? "think" : mode === "confirm" ? "cheer" : "happy", 84)}</div>${body}</div></div>`;
+  view.innerHTML = `<div class="auth-wrap"><div class="auth-card">${demo}<div class="auth-pip">${pip(mode === "confirm" ? "cheer" : "happy", 84)}</div>${body}</div></div>`;
   const root = view, err = $("#err", root), f = $("#f", root), btn = $("#go", root);
   const showErr = m => { if (err) { err.textContent = m || ""; err.className = "err" + (m ? " show" : ""); } };
   const busy = on => { if (btn) { btn.disabled = on; btn.classList.toggle("loading", on); } };
@@ -218,17 +212,6 @@ function renderAuth(mode = "signin") {
     $("#resend", root).onclick = async () => {
       if (Date.now() < resendAt) return; resendAt = Date.now() + 60000;
       const r = await B.resendConfirmation(authNotice); const e = $("#err", root); e.textContent = r.error ? errText(r.error) : t("resent"); e.className = "err show" + (r.error ? "" : " good");
-    }; return;
-  }
-  if (mode === "mfa") {
-    $("#mfa-out", root).onclick = async e => { e.preventDefault(); await B.signOut(); };
-    const codeEl = $("#code", root); codeEl.focus();
-    codeEl.oninput = () => { codeEl.value = codeEl.value.replace(/\D/g, "").slice(0, 6); };
-    f.onsubmit = async e => {
-      e.preventDefault(); showErr(""); if (codeEl.value.length !== 6) return showErr(t("err_code")); busy(true);
-      const r = await B.mfaVerify({ factorId: Account.factorId, code: codeEl.value }); busy(false);
-      if (r.error) { showErr(errText(r.error)); codeEl.select(); return; }
-      await loadAccount();
     }; return;
   }
   if (mode === "forgot") {
@@ -295,7 +278,6 @@ function timezones() { try { return Intl.supportedValuesOf("timeZone"); } catch 
 async function renderSettings() {
   document.title = t("settings_title") + " · Pythonic";
   const S = App.S, ready = Account.phase === "ready" && Account.profile, p = Account.profile || {};
-  if (enabled && Account.phase === "mfa") { go("#/auth/mfa"); return; }
   const themeCur = ready ? (p.theme || "system") : (S.theme || "system");
   const langCur = ready ? p.language : I18N.lang;
   const goalCur = ready ? p.daily_goal : (S.goal || 50);
@@ -326,7 +308,6 @@ async function renderSettings() {
   const security = ready ? `<section class="set-card"><h3>${t("sec_security")}</h3>
     ${row(t("change_pw"), "", `<button class="btn btn-ghost btn-sm" id="pw-btn">${t("change_pw")}</button>`)}
     <div id="pw-form" hidden><div class="field">${pwInput("npw", "new-password")}<div id="npw-s">${strengthHtml("", {})}</div><div class="err" id="npw-e" role="alert"></div><button class="btn btn-primary btn-sm" id="npw-go">${t("set_password")}</button></div></div>
-    ${row(t("twofa"), t("twofa_note"), `<span id="mfa-ctl"><span class="static">${t("loading")}</span></span>`)}
     ${row(t("providers"), "", `<span class="static">${esc(((Account.user && Account.user.providers) || ["email"]).map(x => x === "email" ? t("email") : x[0].toUpperCase() + x.slice(1)).join(", "))}</span>`)}
     ${row(t("signout_all"), t("signout_all_note"), `<button class="btn btn-ghost btn-sm" id="so-all">${t("signout_all")}</button>`)}</section>
     <section class="set-card"><h3>${t("sec_data")}</h3>
@@ -385,7 +366,6 @@ async function renderSettings() {
     const r = await B.updatePassword(v); if (r.error) { e.textContent = errText(r.error); e.className = "err show"; return; }
     e.textContent = ""; $("#npw", root).value = ""; pwForm.hidden = true; toast(t("pw_updated"));
   };
-  paintMfa(root);
   $("#so-all", root).onclick = async () => { await B.signOut("global"); };
   $("#so", root).onclick = async () => { await B.signOut(); };
   $("#exp", root).onclick = async () => {
@@ -400,25 +380,6 @@ async function renderSettings() {
         const r = await B.deleteAccount(); if (r.error) return toast(errText(r.error));
         close(); toast(t("deleted_toast")); } }] });
   };
-}
-
-async function paintMfa(root) {
-  const ctl = $("#mfa-ctl", root); if (!ctl) return;
-  const r = await B.mfaFactors(); if (!$("#mfa-ctl", view)) return;
-  const on = !r.error && r.data && r.data.length > 0;
-  ctl.innerHTML = `<span class="pill-s ${on ? "on" : ""}">${on ? t("twofa_on") : t("twofa_off")}</span> <button class="btn btn-ghost btn-sm" id="mfa-btn">${on ? t("disable") : t("enable")}</button>`;
-  $("#mfa-btn", root).onclick = on ? () => modal({ title: t("twofa"), text: t("disable") + "?", actions: [{ label: t("cancel") }, { label: t("disable"), cls: "btn-bad", onClick: async () => { const x = await B.mfaUnenroll(r.data[0].id); if (x.error) return toast(errText(x.error)); toast(t("twofa_disabled_toast")); paintMfa(root); } }] }) : enrollMfa(() => paintMfa(root));
-}
-async function enrollMfa(done) {
-  const r = await B.mfaEnroll(); if (r.error) return toast(errText(r.error));
-  const { id, qr, secret } = r.data;
-  const close = modal({ title: t("twofa"), text: t("scan_qr"), keep: true,
-    html: `<div class="qr">${/^data:image\//.test(qr) ? `<img src="${esc(qr)}" alt="QR" width="180" height="180">` : ""}</div><p class="fine">${t("cant_scan")} <code>${esc(secret)}</code></p>${B.demo ? `<div class="banner demo">Demo code: 123456</div>` : ""}<div class="field"><input class="input code" id="ec" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="${esc(t("mfa_code"))}"><div class="err" id="ee" role="alert"></div></div>`,
-    actions: [{ label: t("cancel") }, { label: t("verify"), cls: "btn-primary", keep: true, onClick: async () => {
-      const code = $("#ec").value.replace(/\D/g, ""); if (code.length !== 6) { $("#ee").textContent = t("err_code"); $("#ee").className = "err show"; return; }
-      const v = await B.mfaVerify({ factorId: id, code }); if (v.error) { $("#ee").textContent = errText(v.error); $("#ee").className = "err show"; return; }
-      close(); toast(t("twofa_enabled_toast")); done(); } }] });
-  $("#ec").oninput = e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6); };
 }
 
 async function resizeAvatar(file) {
@@ -442,7 +403,6 @@ async function renderLeaderboard() {
   document.title = t("lb_title") + " · Pythonic";
   const head = `<div class="topbar"><h1>${t("lb_title")}</h1></div>`;
   if (!enabled || Account.phase !== "ready") {
-    if (enabled && Account.phase === "mfa") { go("#/auth/mfa"); return; }
     view.innerHTML = `${head}<div class="lb-wrap"><div class="empty-card">${pip("think", 96)}<h2>${t("lb_signin_title")}</h2><p>${enabled ? t("lb_signin_text") : t("not_configured")}</p>${enabled ? `<div class="btns"><a class="btn btn-primary" href="#/auth/signup">${t("create_account")}</a><a class="btn btn-ghost" href="#/auth/signin">${t("sign_in")}</a></div>` : ""}</div></div>`;
     return;
   }

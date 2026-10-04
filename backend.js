@@ -17,7 +17,6 @@ function errKey(e) {
   if (/rate limit|too many|over_\w+_rate|429/i.test(m + c) || (e && e.status === 429)) return "err_rate";
   if (/weak_password|password.*(weak|short|at least|should contain)/i.test(m + c)) return "err_weak";
   if (/reauth|recent login|re-authenticat|same_password/i.test(m + c)) return /same_password/i.test(m + c) ? "err_weak" : "err_reauth";
-  if (/invalid.*(totp|code)|mfa.*(verif|invalid)|code.*(invalid|expired)/i.test(m + c)) return "err_code";
   if (/reserved|not allowed|username_format|username_lower|duplicate key.*username/i.test(m)) return "err_username";
   if (/once every 7 days/i.test(m)) return "err_cooldown";
   if (/rate limited/i.test(m)) return "err_rate";
@@ -57,30 +56,6 @@ function makeSupabase() {
     resetPassword: email => run(() => A.resetPasswordForEmail(email, { redirectTo: redirectUrl() })),
     resendConfirmation: email => run(() => A.resend({ type: "signup", email, options: { emailRedirectTo: redirectUrl() } })),
     updatePassword: password => run(() => A.updateUser({ password })),
-    async aal() {
-      const r = await A.mfa.getAuthenticatorAssuranceLevel();
-      if (r.error) return { needsMfa: false };
-      if (r.data.nextLevel === "aal2" && r.data.currentLevel !== "aal2") {
-        const f = await A.mfa.listFactors();
-        const t = f.data && f.data.totp && f.data.totp[0];
-        return { needsMfa: !!t, factorId: t && t.id };
-      }
-      return { needsMfa: false };
-    },
-    mfaFactors: () => run(async () => { const r = await A.mfa.listFactors(); return r.error ? r : { data: (r.data.totp || []) }; }),
-    mfaEnroll: () => run(async () => {
-      const all = await A.mfa.listFactors();
-      for (const f of (all.data && all.data.all) || []) if (f.status === "unverified") await A.mfa.unenroll({ factorId: f.id });
-      const r = await A.mfa.enroll({ factorType: "totp", friendlyName: "Authenticator " + new Date().toISOString().slice(0, 10) });
-      return r.error ? r : { data: { id: r.data.id, qr: r.data.totp.qr_code, secret: r.data.totp.secret } };
-    }),
-    mfaVerify: ({ factorId, code }) => run(async () => {
-      const ch = await A.mfa.challenge({ factorId });
-      if (ch.error) return ch;
-      return A.mfa.verify({ factorId, challengeId: ch.data.id, code });
-    }),
-    mfaUnenroll: factorId => run(() => A.mfa.unenroll({ factorId })),
-
     getProfile: () => run(() => client.from("profiles").select("*").eq("id", uid).single()),
     updateProfile: patch => run(() => client.from("profiles").update(patch).eq("id", uid).select().single()),
     usernameAvailable: u => run(() => client.rpc("username_available", { p_username: u })),
@@ -102,7 +77,7 @@ function makeSupabase() {
 /* ------------------------------------------------------------ Mock (dev only) */
 function makeMock() {
   const KEY = "pythonic:mockdb";
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || { users: [], profiles: {}, done: {}, avatars: {}, session: null, mfa: {} }; } catch { return { users: [], profiles: {}, done: {}, avatars: {}, session: null, mfa: {} }; } };
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || { users: [], profiles: {}, done: {}, avatars: {}, session: null }; } catch { return { users: [], profiles: {}, done: {}, avatars: {}, session: null }; } };
   let db = load();
   const persist = () => localStorage.setItem(KEY, JSON.stringify(db));
   const delay = (v) => new Promise(r => setTimeout(() => r(v), 120));
@@ -126,8 +101,7 @@ function makeMock() {
   };
   const BOTS = ["codewren", "bytefox", "loop_lily", "nina_py", "stack_sam", "hash_hana", "recurse_ro", "tuple_tim", "lambda_lu", "dict_dan", "bit_bea", "queue_quin"].map((u, i) => ({ id: "bot" + i, username: u, avatar: "preset:" + (1 + i % 8), week: Math.max(0, 210 - i * 17 + (i % 3) * 5), all: 900 - i * 61 }));
   const mkProfile = (id, username, picked) => ({ id, username, username_set: picked, display_name: null, avatar: "preset:" + (1 + Math.floor(Math.random() * 8)), avatar_version: 0, language: "en", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", theme: "system", daily_goal: 50, email_notifications: false, reminders_enabled: false, reminder_time: "18:00:00", show_on_leaderboard: true, guest_imported: false, username_changed_at: null, created_at: new Date().toISOString() });
-  const needMfa = () => { const u = me(); return !!(u && db.mfa[u.id] && db.mfa[u.id].verified && db.session.aal !== "aal2"); };
-  const guard = () => { if (!me()) return "not authenticated"; if (needMfa()) return "second factor required"; return null; };
+  const guard = () => (me() ? null : "not authenticated");
 
   return {
     mode: "mock", demo: true,
@@ -138,38 +112,23 @@ function makeMock() {
       const id = "u" + Math.random().toString(36).slice(2, 10);
       db.users.push({ id, email: email.toLowerCase(), pw: password, created: new Date().toISOString(), providers: ["email"] });
       db.profiles[id] = mkProfile(id, picked ? username : "pip" + Math.random().toString(16).slice(2, 9), picked);
-      db.session = { uid: id, aal: "aal1" }; persist(); emit("SIGNED_IN"); return delay({ data: { needsConfirm: false } });
+      db.session = { uid: id }; persist(); emit("SIGNED_IN"); return delay({ data: { needsConfirm: false } });
     },
     async signIn({ email, password }) {
       const u = db.users.find(x => x.email === email.toLowerCase() && x.pw === password);
       if (!u) return bad("Invalid login credentials");
-      db.session = { uid: u.id, aal: "aal1" }; persist(); emit("SIGNED_IN"); return delay({ data: {} });
+      db.session = { uid: u.id }; persist(); emit("SIGNED_IN"); return delay({ data: {} });
     },
     async signInGoogle() {
       const email = (prompt("Demo Google sign-in: enter an email") || "").trim().toLowerCase(); if (!email) return delay({ data: null });
       let u = db.users.find(x => x.email === email);
       if (!u) { u = { id: "u" + Math.random().toString(36).slice(2, 10), email, pw: null, created: new Date().toISOString(), providers: ["google"] }; db.users.push(u); db.profiles[u.id] = mkProfile(u.id, "pip" + Math.random().toString(16).slice(2, 9), false); }
-      db.session = { uid: u.id, aal: "aal1" }; persist(); emit("SIGNED_IN"); return delay({ data: {} });
+      db.session = { uid: u.id }; persist(); emit("SIGNED_IN"); return delay({ data: {} });
     },
     async signOut() { db.session = null; persist(); emit("SIGNED_OUT"); return delay({ data: {} }); },
     async resetPassword() { return delay({ data: {} }); },
     async resendConfirmation() { return delay({ data: {} }); },
     async updatePassword(pw) { const u = me(); if (!u) return bad("not authenticated"); if (pw.length < 10) return bad("weak_password"); u.pw = pw; persist(); return delay({ data: {} }); },
-    async aal() { return needMfa() ? { needsMfa: true, factorId: db.mfa[me().id].factorId } : { needsMfa: false }; },
-    async mfaFactors() { const u = me(), m = u && db.mfa[u.id]; return ok(m && m.verified ? [{ id: m.factorId, status: "verified" }] : []); },
-    async mfaEnroll() {
-      const u = me(); if (!u) return bad("not authenticated");
-      db.mfa[u.id] = { factorId: "f" + Math.random().toString(36).slice(2, 8), verified: false }; persist();
-      const svg = "data:image/svg+xml;utf8," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><g fill='black'>" + Array.from({ length: 81 }, (_, i) => (Math.sin(i * 12.9898) * 43758) % 1 > 0.5 ? `<rect x='${5 + (i % 9) * 10}' y='${5 + Math.floor(i / 9) * 10}' width='10' height='10'/>` : "").join("") + "</g></svg>");
-      return ok({ id: db.mfa[u.id].factorId, qr: svg, secret: "DEMO-SECRET-KEY" });
-    },
-    async mfaVerify({ factorId, code }) {
-      const u = me(); if (!u || !db.mfa[u.id] || db.mfa[u.id].factorId !== factorId) return bad("invalid factor");
-      if (code !== "123456") return bad("Invalid TOTP code");
-      db.mfa[u.id].verified = true; db.session.aal = "aal2"; persist(); emit("SIGNED_IN"); return ok({});
-    },
-    async mfaUnenroll() { const u = me(); if (u) { delete db.mfa[u.id]; persist(); } return ok({}); },
-
     async getProfile() { const g = guard(); if (g) return bad(g); return ok(db.profiles[me().id]); },
     async updateProfile(patch) {
       const g = guard(); if (g) return bad(g); const p = db.profiles[me().id];
@@ -214,7 +173,7 @@ function makeMock() {
       return ok(rows.filter(r => r.rank <= limit || r.is_me));
     },
     async exportData() { const g = guard(); if (g) return bad(g); const id = me().id; return ok({ exported_at: new Date().toISOString(), profile: { ...db.profiles[id], id: undefined }, completions: Object.entries(db.done[id] || {}).map(([step, v]) => ({ step, xp: v.xp, at: new Date(v.at).toISOString() })) }); },
-    async deleteAccount() { const g = guard(); if (g) return bad(g); const id = me().id; db.users = db.users.filter(u => u.id !== id); delete db.profiles[id]; delete db.done[id]; delete db.mfa[id]; delete db.avatars[id]; db.session = null; persist(); emit("SIGNED_OUT"); return ok({}); },
+    async deleteAccount() { const g = guard(); if (g) return bad(g); const id = me().id; db.users = db.users.filter(u => u.id !== id); delete db.profiles[id]; delete db.done[id]; delete db.avatars[id]; db.session = null; persist(); emit("SIGNED_OUT"); return ok({}); },
   };
 }
 

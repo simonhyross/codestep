@@ -23,10 +23,10 @@ double_confirm_changes = true
 secure_password_change = true        # changing a password needs a recent sign-in
 max_frequency = "60s"                # at most one auth email per address per minute
 
-# Two-step verification (authenticator app). The database additionally enforces it (see schema.sql: aal_ok()).
+# Two-step verification is not offered by the app.
 [auth.mfa.totp]
-enroll_enabled = true
-verify_enabled = true
+enroll_enabled = false
+verify_enabled = false
 
 # Google sign-in: create an OAuth client first (see SETUP.md), export the two variables, set enabled = true, push again.
 #   export GOOGLE_CLIENT_ID=...   export GOOGLE_CLIENT_SECRET=...
