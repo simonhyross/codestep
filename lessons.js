@@ -7,7 +7,7 @@ window.UNITS = [
 {
   id: "basics", title: "Python Basics", desc: "Variables, numbers, decisions and loops", color: "blue",
   lessons: [
-  { id: "hello", title: "Hello, Python", blurb: "Print text and store values", steps: [
+  { id: "hello", needs: [], title: "Hello, Python", blurb: "Print text and store values", steps: [
     { type: "learn", title: "Your first program", html: py`
       <p>A program is a list of instructions. The most famous first instruction is <code>print()</code>, which shows something on screen.</p>
       <pre data-run><code>print("Hello, world!")</code></pre>
@@ -29,7 +29,7 @@ print(age)`, hint: "age = 30 creates it. Then print(age).",
       tests: py`assert age == 30, "age should be 30"
 assert output.strip() == "30", "Print the variable age"` },
   ]},
-  { id: "numbers", title: "Numbers & Strings", blurb: "Maths and f-strings", steps: [
+  { id: "numbers", needs: ["hello"], title: "Numbers & Strings", blurb: "Maths and f-strings", steps: [
     { type: "learn", title: "Python as a calculator", html: py`
       <p>Python understands the usual operators plus a few handy extras:</p>
       <pre><code>7 + 2    # 9      addition
@@ -64,7 +64,7 @@ print(a ** 2)`,
       answer: py`3 2
 289` },
   ]},
-  { id: "decisions", title: "Decisions", blurb: "if, elif and else", steps: [
+  { id: "decisions", needs: ["numbers"], title: "Decisions", blurb: "if, elif and else", steps: [
     { type: "learn", title: "Making choices", html: py`
       <p>Programs choose between paths with <code>if</code>. Indentation (4 spaces) shows which lines belong to which branch.</p>
       <pre data-run><code>temp = 22
@@ -115,7 +115,7 @@ else:
     print("small odd")`,
       answer: py`big odd` },
   ]},
-  { id: "loops", title: "Loops", blurb: "Repeat things with for and while", steps: [
+  { id: "loops", needs: ["decisions"], title: "Loops", blurb: "Repeat things with for and while", steps: [
     { type: "learn", title: "Doing things again", html: py`
       <p>A <code>for</code> loop repeats a block for every item in a sequence. <code>range(n)</code> gives 0 to n-1.</p>
       <pre data-run><code>for i in range(3):
@@ -165,7 +165,7 @@ for n in range(1, 4):
 {
   id: "funcs", title: "Functions & Collections", desc: "Reusable code, lists, dicts and sets", color: "yellow",
   lessons: [
-  { id: "functions", title: "Functions", blurb: "Package code for reuse", steps: [
+  { id: "functions", needs: ["loops"], title: "Functions", blurb: "Package code for reuse", steps: [
     { type: "learn", title: "Define once, use often", html: py`
       <p>A function is a named, reusable block. It takes <b>parameters</b> and sends a value back with <code>return</code>.</p>
       <pre data-run><code>def area(width, height=1):
@@ -214,7 +214,7 @@ print(shout("ok", 1))`,
       answer: py`hi!hi!
 ok!` },
   ]},
-  { id: "lists", title: "Lists", blurb: "Ordered collections", steps: [
+  { id: "lists", needs: ["loops"], title: "Lists", blurb: "Ordered collections", steps: [
     { type: "learn", title: "Lists hold many values", html: py`
       <pre data-run><code>nums = [10, 20, 30, 40]
 nums[0]        # 10   (first)
@@ -259,7 +259,7 @@ print(len(b))`,
       answer: py`[1, 2, 3, 4]
 4` },
   ]},
-  { id: "dicts", title: "Dicts & Sets", blurb: "Look things up by key", steps: [
+  { id: "dicts", needs: ["lists"], title: "Dicts & Sets", blurb: "Look things up by key", steps: [
     { type: "learn", title: "Key → value", html: py`
       <p>A <b>dict</b> maps keys to values. Lookup by key is very fast.</p>
       <pre data-run><code>ages = {"Ada": 36, "Linus": 54}
@@ -295,7 +295,7 @@ stock["apples"] += 1
 print(stock)`,
       answer: py`{'apples': 4, 'pears': 2}` },
   ]},
-  { id: "comprehensions", title: "Comprehensions", blurb: "Build collections in one line", steps: [
+  { id: "comprehensions", needs: ["lists", "functions"], title: "Comprehensions", blurb: "Build collections in one line", steps: [
     { type: "learn", title: "Loops in one line", html: py`
       <p>A <b>comprehension</b> builds a list (or dict, set) from a loop, concisely:</p>
       <pre data-run><code>squares = [x * x for x in range(5)]       # [0, 1, 4, 9, 16]
@@ -334,7 +334,7 @@ print([w.upper() for w in words if len(w) > 3])`,
 {
   id: "ds", title: "Data Structures", desc: "Stacks, queues, linked lists, hashing and trees", color: "sky",
   lessons: [
-  { id: "stacks", title: "Stacks", blurb: "Last in, first out", steps: [
+  { id: "stacks", needs: ["lists", "functions"], title: "Stacks", blurb: "Last in, first out", steps: [
     { type: "learn", title: "Think of a stack of plates", html: py`
       <p>A <b>stack</b> is last-in, first-out (LIFO). You only touch the top. In Python a list works perfectly:</p>
       <pre data-run><code>stack = []
@@ -390,7 +390,7 @@ print(stack)`,
       answer: py`c
 ['a', 'b']` },
   ]},
-  { id: "queues", title: "Queues", blurb: "First in, first out", steps: [
+  { id: "queues", needs: ["stacks"], title: "Queues", blurb: "First in, first out", steps: [
     { type: "learn", title: "Waiting in line", html: py`
       <p>A <b>queue</b> is first-in, first-out (FIFO). New items join the back; items leave from the front.</p>
       <p>Don't use <code>list.pop(0)</code>: it shifts every element, so it's <b>O(n)</b>. Use <code>collections.deque</code>, where both ends are <b>O(1)</b>:</p>
@@ -459,7 +459,7 @@ print(list(q))`,
       answer: py`1 2
 [3, 4]` },
   ]},
-  { id: "linked", title: "Linked Lists", blurb: "Nodes pointing to nodes", steps: [
+  { id: "linked", needs: ["stacks", "recursion"], title: "Linked Lists", blurb: "Nodes pointing to nodes", steps: [
     { type: "learn", title: "A chain of nodes", html: py`
       <p>A <b>linked list</b> stores each value in a node that points to the next one. No contiguous memory is needed.</p>
       <pre data-run><code>class Node:
@@ -532,7 +532,7 @@ assert dump(reverse(build([1, 2, 3, 4]))) == [4, 3, 2, 1]
 assert dump(reverse(build([1]))) == [1]
 assert reverse(None) is None` },
   ]},
-  { id: "hashing", title: "Hash Maps", blurb: "How dicts are so fast", steps: [
+  { id: "hashing", needs: ["dicts"], title: "Hash Maps", blurb: "How dicts are so fast", steps: [
     { type: "learn", title: "Hashing in a nutshell", html: py`
       <p>A dict turns each key into a number with a <b>hash function</b>, and uses it to jump straight to the right slot. That's why lookup, insert and delete are <b>O(1)</b> on average.</p>
       <p>Keys must be <b>hashable</b> (immutable): strings, numbers and tuples work; lists and dicts don't.</p>
@@ -575,7 +575,7 @@ for x in [1, 2, 2, 3, 1]:
       answer: py`dup 2
 dup 1` },
   ]},
-  { id: "trees", title: "Binary Trees", blurb: "Hierarchies and search trees", steps: [
+  { id: "trees", needs: ["linked"], title: "Binary Trees", blurb: "Hierarchies and search trees", steps: [
     { type: "learn", title: "Trees branch", html: py`
       <p>A <b>tree</b> is nodes with children. In a <b>binary search tree</b> (BST) every node has at most two children: smaller values go left, larger go right.</p>
       <pre><code>        8
@@ -690,7 +690,7 @@ assert Node(1).height() == 1` },
 {
   id: "algos", title: "Algorithms", desc: "Searching, sorting, recursion and graphs", color: "orange",
   lessons: [
-  { id: "linear", title: "Linear Search", blurb: "Check items one by one", steps: [
+  { id: "linear", needs: ["lists", "dicts"], title: "Linear Search", blurb: "Check items one by one", steps: [
     { type: "learn", title: "The simplest search", html: py`
       <p><b>Linear search</b> checks each item until it finds the target. It works on any list, sorted or not.</p>
       <pre data-run><code>def contains(arr, target):
@@ -732,7 +732,7 @@ assert find_max([-5, -2, -9]) == -2
 assert find_max([7]) == 7
 assert find_max([]) is None` },
   ]},
-  { id: "binary", title: "Binary Search", blurb: "Halve the problem each step", steps: [
+  { id: "binary", needs: ["linear"], title: "Binary Search", blurb: "Halve the problem each step", steps: [
     { type: "learn", title: "Guess the number", html: py`
       <p>If a list is <b>sorted</b>, check the middle. Too high? Discard the upper half. Too low? Discard the lower half. Repeat.</p>
       <pre><code>lo, hi = 0, len(arr) - 1
@@ -803,7 +803,7 @@ while lo <= hi:
       answer: py`2
 3` },
   ]},
-  { id: "sorting", title: "Sorting", blurb: "Bubble, selection and friends", steps: [
+  { id: "sorting", needs: ["linear", "recursion"], title: "Sorting", blurb: "Bubble, selection and friends", steps: [
     { type: "learn", title: "Putting things in order", html: py`
       <p>Simple sorts compare and swap items repeatedly.</p>
       <ul>
@@ -853,7 +853,7 @@ for i in range(len(data) - 1):
 print(data)`,
       answer: py`[1, 2, 3]` },
   ]},
-  { id: "merge", title: "Merge Sort", blurb: "Divide and conquer", steps: [
+  { id: "merge", needs: ["sorting"], title: "Merge Sort", blurb: "Divide and conquer", steps: [
     { type: "learn", title: "Split, sort, merge", html: py`
       <p><b>Divide and conquer</b>: split the list in half, sort each half recursively, then <b>merge</b> two sorted halves into one.</p>
       <pre><code>def merge_sort(a):
@@ -924,7 +924,7 @@ assert data == copy, "Don't modify the input list"
 assert t < 2, "Too slow. Are you doing O(n log n) work?"
 assert merge_sort([]) == [] and merge_sort([2, 1]) == [1, 2]` },
   ]},
-  { id: "recursion", title: "Recursion", blurb: "Functions that call themselves", steps: [
+  { id: "recursion", needs: ["functions"], title: "Recursion", blurb: "Functions that call themselves", steps: [
     { type: "learn", title: "Solve smaller versions", html: py`
       <p>A <b>recursive</b> function solves a problem by solving a smaller copy of it. It needs:</p>
       <ol><li>a <b>base case</b> that stops the recursion</li><li>a <b>recursive case</b> that moves toward the base case</li></ol>
@@ -983,7 +983,7 @@ print(countdown(3))`,
 1
 6` },
   ]},
-  { id: "graphs", title: "Graphs & BFS", blurb: "Networks and shortest paths", steps: [
+  { id: "graphs", needs: ["queues", "trees"], title: "Graphs & BFS", blurb: "Networks and shortest paths", steps: [
     { type: "learn", title: "Things and connections", html: py`
       <p>A <b>graph</b> is nodes connected by edges: maps, friendships, the web. In Python an <b>adjacency dict</b> is the easiest form:</p>
       <pre data-run><code>graph = {
@@ -1054,7 +1054,7 @@ assert shortest_path_length(g, "B", "C") == -1` },
 {
   id: "eff", title: "Efficiency", desc: "Big-O, speed, memory and smart tricks", color: "navy",
   lessons: [
-  { id: "bigo", title: "Big-O Intuition", blurb: "How code scales", steps: [
+  { id: "bigo", needs: ["linear"], title: "Big-O Intuition", blurb: "How code scales", steps: [
     { type: "learn", title: "Growth rates", html: py`
       <p>Big-O describes how the work grows as the input size <i>n</i> grows, ignoring constants. Compare the common curves:</p>
       <div data-widget="bigo"></div>
@@ -1073,7 +1073,7 @@ assert shortest_path_length(g, "B", "C") == -1` },
         s += x
     return s`, options: ["O(n)", "O(1)", "O(n²)", "O(log n)"], answer: 0, why: [null, "The loop does O(1) work per item, but it runs once per item. Total work grows with size.", "There's only one loop here, not two nested ones.", "log n needs the problem to be halved each step. Here we visit every item."], explain: "One pass over n items." },
   ]},
-  { id: "spot", title: "Spot the Complexity", blurb: "Read code, predict speed", steps: [
+  { id: "spot", needs: ["bigo"], title: "Spot the Complexity", blurb: "Read code, predict speed", steps: [
     { type: "learn", title: "Rules of thumb", html: py`
       <ul>
         <li><b>Sequential</b> steps add: O(n) + O(n) = O(n). Drop constants.</li>
@@ -1111,7 +1111,7 @@ assert t < 0.5, f"Took {t:.2f}s. Aim for O(n)."
 big.append(5)
 assert has_duplicates(big) is True` },
   ]},
-  { id: "twosum", title: "Trade Space for Time", blurb: "Use extra memory to go faster", steps: [
+  { id: "twosum", needs: ["hashing", "spot"], title: "Trade Space for Time", blurb: "Use extra memory to go faster", steps: [
     { type: "learn", title: "Remember what you've seen", html: py`
       <p>Often you can turn O(n²) into O(n) by spending a little memory, usually a dict or set.</p>
       <p><b>Two Sum</b>: find two numbers adding to <code>target</code>. Brute force tries every pair: O(n²). Instead, for each number ask: <i>have I already seen <code>target - x</code>?</i></p>
@@ -1154,7 +1154,7 @@ r, t = timed(max_subarray, [1] * 200000)
 assert r == 200000
 assert t < 0.5, f"Took {t:.2f}s. Aim for O(n)."` },
   ]},
-  { id: "memo", title: "Memoization", blurb: "Never solve the same thing twice", steps: [
+  { id: "memo", needs: ["recursion", "bigo"], title: "Memoization", blurb: "Never solve the same thing twice", steps: [
     { type: "learn", title: "Cache your answers", html: py`
       <p>Naive recursive Fibonacci recomputes the same values again and again: <code>fib(40)</code> makes over 300 million calls!</p>
       <pre data-run><code>def fib(n):
@@ -1213,7 +1213,7 @@ def fib(n):
 print(fib(4), calls)`,
       answer: py`3 9` },
   ]},
-  { id: "space", title: "Memory & Generators", blurb: "Do more with less space", steps: [
+  { id: "space", needs: ["memo", "spot"], title: "Memory & Generators", blurb: "Do more with less space", steps: [
     { type: "learn", title: "Space complexity", html: py`
       <p>Speed isn't the only cost. <b>Space complexity</b> measures extra memory. Two tools for saving it:</p>
       <ul>
