@@ -15,6 +15,18 @@
 -- generated: `node scripts/gen-seed.mjs`).
 -- =====================================================================
 
+-- ---------------------------------------------------------------- 2FA enforcement
+-- If a user has a verified TOTP factor, their session must be at assurance level aal2
+-- (i.e. they entered the 6-digit code) before any of their data is readable or writable.
+-- Without this, a stolen password alone would still open the account.
+create or replace function public.aal_ok()
+returns boolean language sql stable security definer set search_path = public, auth as $$
+  select coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2'
+      or not exists (select 1 from auth.mfa_factors f where f.user_id = auth.uid() and f.status = 'verified')
+$$;
+revoke all on function public.aal_ok() from public, anon;
+grant execute on function public.aal_ok() to authenticated;
+
 -- ---------------------------------------------------------------- profiles
 create table if not exists public.profiles (
   id                  uuid primary key references auth.users (id) on delete cascade,
@@ -90,9 +102,9 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 
 alter table public.profiles enable row level security;
 drop policy if exists profiles_select_own on public.profiles;
-create policy profiles_select_own on public.profiles for select to authenticated using (id = auth.uid());
+create policy profiles_select_own on public.profiles for select to authenticated using (id = auth.uid() and public.aal_ok());
 drop policy if exists profiles_update_own on public.profiles;
-create policy profiles_update_own on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+create policy profiles_update_own on public.profiles for update to authenticated using (id = auth.uid() and public.aal_ok()) with check (id = auth.uid() and public.aal_ok());
 -- no insert / delete policies: rows are created by the trigger and removed by cascade.
 
 revoke all on public.profiles from anon, authenticated;
@@ -124,7 +136,7 @@ create index if not exists completions_user_time on public.completions (user_id,
 create index if not exists completions_time on public.completions (created_at);
 alter table public.completions enable row level security;
 drop policy if exists completions_select_own on public.completions;
-create policy completions_select_own on public.completions for select to authenticated using (user_id = auth.uid());
+create policy completions_select_own on public.completions for select to authenticated using (user_id = auth.uid() and public.aal_ok());
 revoke all on public.completions from anon, authenticated;
 grant select on public.completions to authenticated;   -- writes happen only through record_step()
 
@@ -147,6 +159,7 @@ returns jsonb language plpgsql stable security definer set search_path = public 
 declare uid uuid := auth.uid(); tz text; res jsonb;
 begin
   if uid is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if not public.aal_ok() then raise exception 'second factor required' using errcode = '42501'; end if;
   select timezone into tz from public.profiles where id = uid;
   tz := coalesce(tz, 'UTC');
   select jsonb_build_object(
@@ -168,6 +181,7 @@ returns jsonb language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); mx int; recent int;
 begin
   if uid is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if not public.aal_ok() then raise exception 'second factor required' using errcode = '42501'; end if;
   select max_xp into mx from public.lesson_steps where step_key = p_step_key;
   if mx is null then raise exception 'unknown step' using errcode = '22023'; end if;
   select count(*) into recent from public.completions where user_id = uid and created_at > now() - interval '1 minute';
@@ -183,6 +197,7 @@ returns jsonb language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); already boolean;
 begin
   if uid is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if not public.aal_ok() then raise exception 'second factor required' using errcode = '42501'; end if;
   select guest_imported into already from public.profiles where id = uid for update;
   if already is null or already then return public.get_my_progress(); end if;
   insert into public.completions (user_id, step_key, xp, created_at)
@@ -207,7 +222,7 @@ language sql stable security definer set search_path = public as $$
   )
   select r.rnk, r.username, r.avatar, r.avatar_version, r.user_id, r.xp, (r.user_id = auth.uid())
   from ranked r
-  where r.rnk <= least(greatest(p_limit, 1), 100) or r.user_id = auth.uid()
+  where public.aal_ok() and (r.rnk <= least(greatest(p_limit, 1), 100) or r.user_id = auth.uid())
   order by r.rnk, r.username
 $$;
 
@@ -223,6 +238,7 @@ create or replace function public.delete_my_account()
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if not public.aal_ok() then raise exception 'second factor required' using errcode = '42501'; end if;
   delete from auth.users where id = auth.uid();       -- cascades to profiles and completions
 end $$;
 
@@ -230,6 +246,7 @@ create or replace function public.export_my_data()
 returns jsonb language plpgsql stable security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'not authenticated' using errcode = '28000'; end if;
+  if not public.aal_ok() then raise exception 'second factor required' using errcode = '42501'; end if;
   return jsonb_build_object(
     'exported_at', now(),
     'profile', (select to_jsonb(p) - 'id' from public.profiles p where p.id = auth.uid()),

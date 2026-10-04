@@ -10,7 +10,7 @@ const db = new PGlite();
 let pass = 0, fail = 0;
 const ok = (c, m) => { c ? pass++ : (fail++, console.log("  FAIL:", m)); };
 const q = async (sql, params) => (await db.query(sql, params)).rows;
-const as = async (uid, role = "authenticated") => { await db.exec(`reset role; set role ${role}; select set_config('test.uid', '${uid || ""}', false);`); };
+const as = async (uid, role = "authenticated", aal = "aal1") => { await db.exec(`reset role; set role ${role}; select set_config('test.uid', '${uid || ""}', false), set_config('test.aal', '${aal}', false);`); };
 const su = () => db.exec("reset role");
 const throws = async (fn, re, msg) => { try { await fn(); fail++; console.log("  FAIL (no error):", msg); } catch (e) { re.test(String(e.message)) ? pass++ : (fail++, console.log("  FAIL (wrong error):", msg, "->", e.message)); } };
 
@@ -18,6 +18,8 @@ await db.exec(`
   create schema auth;
   create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}'::jsonb);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
+  create function auth.jwt() returns jsonb language sql stable as $$ select jsonb_build_object('aal', coalesce(nullif(current_setting('test.aal', true), ''), 'aal1')) $$;
+  create table auth.mfa_factors (id uuid primary key default gen_random_uuid(), user_id uuid references auth.users on delete cascade, status text);
   create role anon nologin; create role authenticated nologin; create role service_role nologin;
   grant usage on schema auth, public to anon, authenticated, service_role;
 `);
@@ -179,6 +181,34 @@ await db.query("insert into completions (user_id, step_key, xp) values ($1, 'hel
 await db.exec("set role service_role");
 claim = await q("select * from claim_due_emails() where user_id = $1", [eUser]);
 ok(!claim.some(c => c.kind === "reminder"), "no reminder if already practised today");
+
+console.log("2FA enforcement");
+await su();
+const mUser = await mk("m@x.io", { username: "mfauser" });
+await db.query("insert into completions (user_id, step_key, xp) values ($1, 'hello:1', 15)", [mUser]);
+await as(mUser, "authenticated", "aal1");
+ok((await q("select count(*)::int c from profiles"))[0].c === 1, "no factor: aal1 session can read");
+await su();
+await db.query("insert into auth.mfa_factors (user_id, status) values ($1, 'unverified')", [mUser]);
+await as(mUser, "authenticated", "aal1");
+ok((await q("select count(*)::int c from profiles"))[0].c === 1, "unverified factor does not lock the account");
+await su();
+await db.query("update auth.mfa_factors set status = 'verified' where user_id = $1", [mUser]);
+await as(mUser, "authenticated", "aal1");
+ok((await q("select count(*)::int c from profiles"))[0].c === 0, "verified factor: password-only session sees no profile");
+ok((await q("select count(*)::int c from completions"))[0].c === 0, "verified factor: password-only session sees no completions");
+await throws(() => db.query("select get_my_progress()"), /second factor required/, "progress blocked without second factor");
+await throws(() => db.query("select record_step('hello:2', 5)"), /second factor required/, "record_step blocked without second factor");
+await throws(() => db.query("select export_my_data()"), /second factor required/, "export blocked without second factor");
+await throws(() => db.query("select delete_my_account()"), /second factor required/, "delete blocked without second factor");
+ok((await q("select count(*)::int c from get_leaderboard('all', 10)"))[0].c === 0, "leaderboard empty without second factor");
+const upd = await db.query("update profiles set display_name = 'x' where id = $1", [mUser]);
+ok(upd.affectedRows === 0, "profile update blocked without second factor");
+await as(mUser, "authenticated", "aal2");
+ok((await q("select count(*)::int c from profiles"))[0].c === 1, "aal2 session can read profile");
+ok((await q("select get_my_progress() as p"))[0].p.xp === 15, "aal2 session can read progress");
+await db.query("select record_step('hello:2', 5)");
+ok((await q("select get_my_progress() as p"))[0].p.xp === 20, "aal2 session can record");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
